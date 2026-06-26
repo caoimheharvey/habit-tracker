@@ -10,7 +10,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "next lint",
-    "generate-totp-secret": "node -e \"const {authenticator}=require('otplib');console.log('TOTP_SECRET='+authenticator.generateSecret())\""
+    "generate-totp-secret": "node -e \"const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';const b=require('crypto').randomBytes(32);let s='';for(let i=0;i<32;i++)s+=c[b[i]%32];console.log('TOTP_SECRET='+s)\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.9",
