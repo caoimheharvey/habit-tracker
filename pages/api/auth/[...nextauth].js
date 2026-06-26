@@ -1,8 +1,6 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
-const CANONICAL_URL = 'https://habit-tracker-caoimheaudhdhabittracker.vercel.app'
-
 async function refreshAccessToken(token) {
   try {
     const res = await fetch('https://oauth2.googleapis.com/token', {
@@ -44,21 +42,18 @@ export const authOptions = {
             'https://www.googleapis.com/auth/calendar.readonly',
             'https://www.googleapis.com/auth/gmail.readonly',
           ].join(' '),
-          access_type:  'offline',
-          prompt:       'consent',
-          redirect_uri: `${CANONICAL_URL}/api/auth/callback/google`,
+          access_type: 'offline',
+          prompt:      'consent',
         },
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  url:    CANONICAL_URL,
   session: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, account }) {
-      // First sign-in — store tokens
       if (account) {
         return {
           ...token,
@@ -67,13 +62,7 @@ export const authOptions = {
           expiresAt:    account.expires_at,
         }
       }
-
-      // Token still valid (with 60s buffer)
-      if (Date.now() < (token.expiresAt - 60) * 1000) {
-        return token
-      }
-
-      // Access token expired — refresh it silently
+      if (Date.now() < (token.expiresAt - 60) * 1000) return token
       return refreshAccessToken(token)
     },
     async session({ session, token }) {
