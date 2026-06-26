@@ -21,6 +21,18 @@
   --muted:     #8C6E56;
   --white:     #FFFDF5;
   --shadow:    rgba(120,80,40,0.13);
+
+  /* Dopamine palette */
+  --punch:     #FF5F3D;
+  --punch-l:   #FFF0ED;
+  --electric:  #6C63FF;
+  --electric-l:#F0EFFF;
+  --neon:      #00C853;
+  --neon-l:    #E8FFF2;
+  --fire:      #FF9500;
+  --fire-l:    #FFF5E5;
+  --hot-pink:  #FF3CAC;
+  --deep:      #1A0A3D;
 }
 
 html, body {
@@ -79,6 +91,44 @@ html, body {
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes checkBounce {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.4); }
+  55%  { transform: scale(0.88); }
+  80%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes rowFlash {
+  0%   { background: var(--white); }
+  25%  { background: #E6FFF2; }
+  100% { background: var(--white); }
+}
+
+@keyframes streakPop {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.12); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0); }
+  50%       { box-shadow: 0 0 24px 8px rgba(108,99,255,0.25); }
+}
+
+@keyframes confettiDrop {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(80px) rotate(720deg); opacity: 0; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes ringAppear {
+  from { stroke-dashoffset: 502; opacity: 0; }
 }
 
 /* ── Focus ring (accessibility) ──────────────────────────── */
