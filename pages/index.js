@@ -484,17 +484,23 @@ export default function App() {
 
           <div style={{ padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-            {/* Google connect banner */}
-            {status === 'unauthenticated' && (
+            {/* Google connect / token-expired banner */}
+            {(status === 'unauthenticated' || session?.error === 'RefreshAccessTokenError') && (
               <div style={{ background: 'var(--lav-l)', border: '2px dashed var(--lavender)', borderRadius: 16,
                 padding: '13px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#6B5280' }}>Connect Google 🔗</div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>Smart calendar-aware tasks</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#6B5280' }}>
+                    {session?.error ? 'Reconnect Google 🔄' : 'Connect Google 🔗'}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>
+                    {session?.error ? 'Your session expired — tap to refresh' : 'Smart calendar-aware tasks'}
+                  </div>
                 </div>
                 <button onClick={() => signIn('google')} style={{ background: '#6B5280', color: 'white', border: 'none',
                   borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer',
-                  fontFamily: "'Nunito',sans-serif" }}>Connect</button>
+                  fontFamily: "'Nunito',sans-serif" }}>
+                  {session?.error ? 'Reconnect' : 'Connect'}
+                </button>
               </div>
             )}
 
