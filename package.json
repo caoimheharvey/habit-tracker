@@ -9,27 +9,30 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-totp-secret": "node -e \"const {authenticator}=require('otplib');console.log('TOTP_SECRET='+authenticator.generateSecret())\""
   },
   "dependencies": {
-    "next": "14.2.3",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "next-auth": "^4.24.7",
+    "@anthropic-ai/sdk": "^0.20.9",
     "googleapis": "^140.0.1",
-    "@anthropic-ai/sdk": "^0.20.9"
+    "next": "14.2.3",
+    "next-auth": "^4.24.7",
+    "otplib": "^13.4.1",
+    "qrcode": "^1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.4.2",
-    "@testing-library/react": "^15.0.7",
-    "@testing-library/user-event": "^14.5.2",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "babel-jest": "^29.7.0",
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
     "@babel/preset-react": "^7.24.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^15.0.7",
+    "@testing-library/user-event": "^14.5.2",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.3"
+    "eslint-config-next": "14.2.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
   }
 }

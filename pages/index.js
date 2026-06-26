@@ -2,11 +2,11 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { useAppState }  from '../src/hooks/useAppState'
-import { usePin }       from '../src/hooks/usePin'
+import { useTotp }      from '../src/hooks/useTotp'
 import { useRoast }     from '../src/hooks/useRoast'
 import { useToast }     from '../src/hooks/useToast'
 
-import PinScreen        from '../src/components/PinScreen'
+import TotpScreen       from '../src/components/TotpScreen'
 import TaskRow          from '../src/components/TaskRow'
 import { WhimsyCard, Label, SectionHead, Toast, Spinner } from '../src/components/ui'
 
@@ -273,8 +273,8 @@ export default function App() {
 
   const fileRef = useRef()
 
-  // ── Pin ──
-  const { mode: pinMode, input: pinInput, error: pinError, shaking: pinShaking, onDigit, onDelete, lock } = usePin()
+  // ── TOTP ──
+  const { mode: pinMode, error: pinError, loading: pinLoading, verify: verifyTotp, lock } = useTotp()
 
   // ── App state ──
   const {
@@ -415,18 +415,10 @@ export default function App() {
   const greeting   = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr    = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  // ── PIN screens ──
-  if (pinMode === 'locked' || pinMode === 'setup' || pinMode === 'confirm') {
-    return (
-      <PinScreen
-        mode={pinMode}
-        input={pinInput}
-        error={pinError}
-        shaking={pinShaking}
-        onDigit={onDigit}
-        onDelete={onDelete}
-      />
-    )
+  // ── TOTP screen (checking = show nothing while verifying cookie) ──
+  if (pinMode === 'checking') return null
+  if (pinMode === 'locked') {
+    return <TotpScreen error={pinError} loading={pinLoading} onVerify={verifyTotp}/>
   }
 
   // ── All-done overlay ──

@@ -1,10 +1,10 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
-// Force NextAuth to always use the configured URL, never the per-deployment Vercel preview URL.
-// Without this, VERCEL_URL leaks into the redirect_uri and breaks OAuth on every new deploy.
-if (process.env.NEXTAUTH_URL) {
-  process.env.NEXTAUTH_URL_INTERNAL = process.env.NEXTAUTH_URL
+// Vercel injects VERCEL_URL (per-deployment hash URL) which NextAuth picks up when
+// NEXTAUTH_URL is missing. Force the stable production URL using Vercel's own system var.
+if (!process.env.NEXTAUTH_URL && process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
 }
 
 export const authOptions = {
