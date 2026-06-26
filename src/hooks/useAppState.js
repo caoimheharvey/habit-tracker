@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   loadState,
   persistState,
+  migrateStateToDay,
   toggleDailyTask,
   toggleOneOffTask,
   deleteOneOffTask,
@@ -15,29 +16,90 @@ import {
 } from '../lib/state'
 import { DAILY_TASKS } from '../lib/constants'
 
+const SAVE_DEBOUNCE_MS = 1500
+
+async function fetchServerState() {
+  try {
+    const res = await fetch('/api/state')
+    if (!res.ok) return null
+    const { state } = await res.json()
+    return state ?? null
+  } catch {
+    return null
+  }
+}
+
+async function saveServerState(state) {
+  try {
+    await fetch('/api/state', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ state }),
+    })
+  } catch {
+    // localStorage is the fallback — fail silently
+  }
+}
+
 /**
  * Central state hook for the app.
- * Handles localStorage persistence and all state mutations.
+ * Uses localStorage as an instant-load cache and Vercel KV as the
+ * cross-device source of truth. Changes are debounced 1.5s before
+ * being written to the server.
  *
  * @param {{ today: string, onAllDailyDone: () => void }} options
  */
 export function useAppState({ today, onAllDailyDone }) {
   const [state, setState] = useState(null)
+  const saveTimer = useRef(null)
+  // Prevent the initial server-state load from triggering a redundant save
+  const isInitialServerLoad = useRef(false)
 
-  // Hydrate from localStorage on mount
+  // 1. Hydrate from localStorage immediately (instant)
   useEffect(() => {
     setState(loadState(today))
   }, [today])
 
-  // Persist on every change
+  // 2. Once localStorage state is ready, overlay with server state
   useEffect(() => {
-    if (state) persistState(state)
+    if (!state) return
+    let cancelled = false
+
+    fetchServerState().then(serverState => {
+      if (cancelled || !serverState) return
+      isInitialServerLoad.current = true
+      setState(prev => {
+        // Migrate server state to today (handles cross-day device sync)
+        const migrated = migrateStateToDay(serverState, today)
+        // Prefer server for everything; keep local photos if server has none
+        // (photos are large and may not always be synced successfully)
+        const merged = {
+          ...migrated,
+          photos: migrated.photos?.length ? migrated.photos : (prev?.photos ?? []),
+        }
+        persistState(merged)
+        return merged
+      })
+    })
+
+    return () => { cancelled = true }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 3. Persist to localStorage and debounce-save to server on every change
+  useEffect(() => {
+    if (!state) return
+    persistState(state)
+
+    // Skip the server save triggered by the initial server load itself
+    if (isInitialServerLoad.current) {
+      isInitialServerLoad.current = false
+      return
+    }
+
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => saveServerState(state), SAVE_DEBOUNCE_MS)
   }, [state])
 
-  /**
-   * Internal updater: applies a pure transform, persists, and returns the new state.
-   * @param {(prev: import('../types').AppState) => import('../types').AppState} transform
-   */
   const update = useCallback((transform) => {
     setState(prev => {
       if (!prev) return prev
@@ -59,29 +121,16 @@ export function useAppState({ today, onAllDailyDone }) {
     })
   }, [update, today, onAllDailyDone])
 
-  const handleToggleOneOff = useCallback((index) => {
-    update(prev => toggleOneOffTask(prev, index))
-  }, [update])
-
-  const handleDeleteOneOff = useCallback((index) => {
-    update(prev => deleteOneOffTask(prev, index))
-  }, [update])
+  const handleToggleOneOff  = useCallback((index) => update(prev => toggleOneOffTask(prev, index)), [update])
+  const handleDeleteOneOff  = useCallback((index) => update(prev => deleteOneOffTask(prev, index)), [update])
 
   const handleAddOneOff = useCallback((rawTitle) => {
     const title = sanitiseTitle(rawTitle)
     if (!title) return false
-    update(prev => addOneOffTask(prev, {
-      title,
-      done:      false,
-      addedDate: today,
-    }))
+    update(prev => addOneOffTask(prev, { title, done: false, addedDate: today }))
     return true
   }, [update, today])
 
-  /**
-   * @param {import('../types').SmartTask[]} tasks
-   * @returns {number} number of tasks actually added
-   */
   const handleMergeSmartTasks = useCallback((tasks, smartDate = today) => {
     let addedCount = 0
     update(prev => {
@@ -92,13 +141,8 @@ export function useAppState({ today, onAllDailyDone }) {
     return addedCount
   }, [update, today])
 
-  const handleAddPhoto = useCallback((dataUrl) => {
-    update(prev => addPhoto(prev, dataUrl))
-  }, [update])
-
-  const handleRemovePhoto = useCallback((index) => {
-    update(prev => removePhoto(prev, index))
-  }, [update])
+  const handleAddPhoto    = useCallback((dataUrl) => update(prev => addPhoto(prev, dataUrl)),    [update])
+  const handleRemovePhoto = useCallback((index)   => update(prev => removePhoto(prev, index)),   [update])
 
   const handleSetSmartTasksDate = useCallback((date) => {
     update(prev => ({ ...prev, smartTasksDate: date }))
@@ -106,7 +150,7 @@ export function useAppState({ today, onAllDailyDone }) {
 
   return {
     state,
-    dailyTaskCount:  DAILY_TASKS.length,
+    dailyTaskCount: DAILY_TASKS.length,
     handleToggleDaily,
     handleToggleOneOff,
     handleDeleteOneOff,
