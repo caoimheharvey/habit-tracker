@@ -1,7 +1,14 @@
-import { kv }                  from '@vercel/kv'
+import { Redis }                from '@upstash/redis'
 import { isTotpAuthenticated } from '../../src/lib/serverAuth'
 
 const STATE_KEY = 'app_state'
+
+function getRedis() {
+  return new Redis({
+    url:   process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  })
+}
 
 export default async function handler(req, res) {
   if (!isTotpAuthenticated(req)) {
@@ -10,7 +17,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const state = await kv.get(STATE_KEY)
+      const state = await getRedis().get(STATE_KEY)
       return res.json({ state: state ?? null })
     } catch (err) {
       console.error('[state/get]', err)
@@ -22,7 +29,7 @@ export default async function handler(req, res) {
     try {
       const { state } = req.body ?? {}
       if (!state) return res.status(400).json({ error: 'Missing state' })
-      await kv.set(STATE_KEY, state)
+      await getRedis().set(STATE_KEY, state)
       return res.json({ ok: true })
     } catch (err) {
       console.error('[state/set]', err)
