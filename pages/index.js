@@ -307,10 +307,19 @@ export default function App() {
   const fileRef = useRef()
 
   useEffect(() => {
-    fetch('/api/background')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => d?.urlRegular && setDailyBg(d))
-      .catch(() => {})
+    const fetchBg = () =>
+      fetch('/api/background')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d?.urlRegular && setDailyBg(d))
+        .catch(() => {})
+
+    fetchBg()
+
+    // Re-fetch at the top of each hour
+    const msUntilNextHour = (60 - new Date().getMinutes()) * 60000 - new Date().getSeconds() * 1000
+    const first = setTimeout(() => { fetchBg(); }, msUntilNextHour)
+    const interval = setInterval(fetchBg, 3600000)
+    return () => { clearTimeout(first); clearInterval(interval) }
   }, [])
 
   const { mode: pinMode, error: pinError, loading: pinLoading, verify: verifyTotp, lock } = useTotp()

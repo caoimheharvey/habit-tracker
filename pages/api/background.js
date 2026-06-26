@@ -1,6 +1,9 @@
 import { Redis } from '@upstash/redis'
 
-const CACHE_KEY = () => `bg_${new Date().toISOString().slice(0, 10)}`
+const CACHE_KEY = () => {
+  const n = new Date()
+  return `bg_${n.toISOString().slice(0, 10)}_${n.getUTCHours()}`
+}
 
 const QUERIES = [
   'mountain sunrise landscape',
@@ -35,9 +38,9 @@ export default async function handler(req, res) {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY
   if (!accessKey) return res.status(500).json({ error: 'UNSPLASH_ACCESS_KEY not set' })
 
-  // Pick a query based on day-of-year so it rotates predictably
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000)
-  const query     = QUERIES[dayOfYear % QUERIES.length]
+  // Pick a query based on hour so it rotates every hour predictably
+  const hour  = new Date().getUTCHours()
+  const query = QUERIES[hour % QUERIES.length]
 
   try {
     const r = await fetch(
@@ -55,10 +58,10 @@ export default async function handler(req, res) {
       query,
     }
 
-    // Cache until midnight (TTL in seconds)
-    const now       = new Date()
-    const midnight  = new Date(now); midnight.setHours(24, 0, 0, 0)
-    const ttl       = Math.floor((midnight - now) / 1000)
+    // Cache for the rest of the current hour
+    const now      = new Date()
+    const nextHour = new Date(now); nextHour.setUTCHours(now.getUTCHours() + 1, 0, 0, 0)
+    const ttl      = Math.floor((nextHour - now) / 1000)
     await redis.set(key, result, { ex: ttl })
 
     res.setHeader('Cache-Control', 'public, max-age=3600')
