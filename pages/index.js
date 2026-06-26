@@ -303,7 +303,15 @@ export default function App() {
   const [rollover, setRollover] = useState([])
   const [roLoading, setRoLoad]  = useState(false)
   const [photoIdx, setPhotoIdx] = useState(0)
+  const [dailyBg, setDailyBg]   = useState(null)
   const fileRef = useRef()
+
+  useEffect(() => {
+    fetch('/api/background')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.urlRegular && setDailyBg(d))
+      .catch(() => {})
+  }, [])
 
   const { mode: pinMode, error: pinError, loading: pinLoading, verify: verifyTotp, lock } = useTotp()
 
@@ -390,7 +398,7 @@ export default function App() {
   if (!state) return null
 
   const photos     = state.photos ?? []
-  const bgPhoto    = photos.length ? photos[photoIdx] : null
+  const bgPhoto    = photos.length ? photos[photoIdx] : (dailyBg?.urlRegular ?? null)
   const dailyDone  = countDailyDone(state)
   const dailyTotal = DAILY_TASKS.length
   const greeting   = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
@@ -705,7 +713,16 @@ export default function App() {
           ))}
         </nav>
 
-        <Toast message={toast}/>
+        {dailyBg && !photos.length && (
+        <a href={dailyBg.photographerUrl + '?utm_source=morning_accountability&utm_medium=referral'}
+          target="_blank" rel="noopener noreferrer"
+          style={{ position:'fixed', bottom:'calc(env(safe-area-inset-bottom) + 62px)', left:14,
+            fontSize:9, color:'rgba(255,255,255,0.22)', fontWeight:500, textDecoration:'none',
+            zIndex:400, letterSpacing:'0.3px' }}>
+          Photo: {dailyBg.photographer} / Unsplash
+        </a>
+      )}
+      <Toast message={toast}/>
       </div>
     </>
   )
