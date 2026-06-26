@@ -1,12 +1,16 @@
-import { authenticator } from 'otplib'
-import QRCode            from 'qrcode'
+import QRCode        from 'qrcode'
+import { totpUri }   from '../../../src/lib/totp'
 
 export default async function handler(req, res) {
   const secret = process.env.TOTP_SECRET
-  if (!secret) return res.status(500).json({ error: 'TOTP_SECRET is not set in environment variables' })
+  if (!secret) {
+    return res.status(500).json({
+      error: 'TOTP_SECRET is not set — run npm run generate-totp-secret and add it to your environment variables',
+    })
+  }
 
-  const otpauth  = authenticator.keyuri('me', 'Morning Accountability', secret)
-  const qrDataUrl = await QRCode.toDataURL(otpauth, { width: 280, margin: 2 })
+  const uri       = totpUri(secret, 'Morning Accountability', 'me')
+  const qrDataUrl = await QRCode.toDataURL(uri, { width: 280, margin: 2 })
 
   return res.json({ qrDataUrl })
 }

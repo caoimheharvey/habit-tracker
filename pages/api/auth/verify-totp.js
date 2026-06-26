@@ -1,7 +1,7 @@
-import { authenticator } from 'otplib'
-import { createHmac }    from 'crypto'
+import { createHmac }  from 'crypto'
+import { totpVerify }  from '../../../src/lib/totp'
 
-const SESSION_DURATION_MS = 24 * 60 * 60 * 1000 // 24 hours
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000
 
 function signedCookie(expiresAt) {
   const payload = String(expiresAt)
@@ -35,8 +35,9 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'Invalid code format' })
   }
 
-  const valid = authenticator.verify({ token: code, secret })
-  if (!valid) return res.status(401).json({ error: 'Invalid code' })
+  if (!totpVerify(secret, code)) {
+    return res.status(401).json({ error: 'Invalid code' })
+  }
 
   const expiresAt = Date.now() + SESSION_DURATION_MS
   const expires   = new Date(expiresAt)
