@@ -9,7 +9,7 @@ import TotpScreen         from '../src/components/TotpScreen'
 import TaskRow            from '../src/components/TaskRow'
 import { Toast, Spinner } from '../src/components/ui'
 import { DAILY_TASKS }    from '../src/lib/constants'
-import { countDailyDone } from '../src/lib/state'
+import { countDailyDone, computeScore } from '../src/lib/state'
 
 const TODAY       = new Date().toDateString()
 const DAY_OF_YEAR = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
@@ -128,7 +128,7 @@ function Confetti({ active }) {
 }
 
 // ── Score ring ────────────────────────────────────────────────────────────────
-function ScoreRing({ done, total }) {
+function ScoreRing({ done, total, score }) {
   const pct   = total ? done / total : 0
   const r     = 56
   const circ  = 2 * Math.PI * r
@@ -149,7 +149,7 @@ function ScoreRing({ done, total }) {
         <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column',
           alignItems:'center', justifyContent:'center' }}>
           <div style={{ fontSize:30, fontWeight:900, color:'#fff', lineHeight:1, letterSpacing:'-1px' }}>
-            {Math.round(pct*100)}
+            {score ?? Math.round(pct*100)}
           </div>
           <div style={{ fontSize:9, fontWeight:600, color:'rgba(255,255,255,0.4)',
             textTransform:'uppercase', letterSpacing:'1.5px', marginTop:2 }}>
@@ -158,7 +158,102 @@ function ScoreRing({ done, total }) {
         </div>
       </div>
       <div style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.45)',
-        textTransform:'uppercase', letterSpacing:'2px' }}>Today</div>
+        textTransform:'uppercase', letterSpacing:'2px' }}>Today ›</div>
+    </div>
+  )
+}
+
+// ── History modal ─────────────────────────────────────────────────────────────
+function HistoryModal({ history, todayScore, onClose }) {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+
+  const scoreColor = (s) =>
+    s >= 80 ? '#30D158' : s >= 50 ? '#00D4B8' : s >= 20 ? '#FF9F0A' : '#FF453A'
+
+  const MiniRing = ({ score }) => {
+    const r    = 16
+    const circ = 2 * Math.PI * r
+    const pct  = score / 100
+    const col  = scoreColor(score)
+    return (
+      <svg width="40" height="40" viewBox="0 0 40 40" style={{ transform:'rotate(-90deg)', flexShrink:0 }} aria-hidden="true">
+        <circle cx="20" cy="20" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4"/>
+        <circle cx="20" cy="20" r={r} fill="none" stroke={col} strokeWidth="4" strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={circ*(1-pct)}
+          style={{ filter: pct > 0 ? `drop-shadow(0 0 4px ${col})` : 'none' }}/>
+      </svg>
+    )
+  }
+
+  const avg = history.length
+    ? Math.round(history.reduce((s,d) => s + d.score, 0) / history.length)
+    : todayScore
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:800,
+      background:'rgba(0,0,0,0.6)', backdropFilter:'blur(6px)', WebkitBackdropFilter:'blur(6px)',
+      display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        ...darkGlass(0.6, 32),
+        borderRadius:'24px 24px 0 0', width:'100%', maxWidth:480,
+        maxHeight:'80vh', display:'flex', flexDirection:'column',
+        animation:'slideUp .3s cubic-bezier(.4,0,.2,1)',
+      }}>
+        {/* Header */}
+        <div style={{ padding:'20px 22px 14px', display:'flex', alignItems:'center', justifyContent:'space-between',
+          borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+          <div>
+            <div style={{ fontSize:18, fontWeight:800, letterSpacing:'-0.3px' }}>Consistency</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginTop:2 }}>
+              {history.length > 0 ? `${history.length}-day average: ` : 'Start your history today · '}
+              <span style={{ color: scoreColor(avg), fontWeight:700 }}>{avg}%</span>
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close"
+            style={{ ...darkGlass(0.3,10), border:'1px solid rgba(255,255,255,0.1)',
+              borderRadius:'50%', width:34, height:34, color:'rgba(255,255,255,0.5)',
+              fontSize:18, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+              fontFamily:'Inter, sans-serif' }}>×</button>
+        </div>
+
+        {/* Today */}
+        <div style={{ padding:'14px 22px', borderBottom:'1px solid rgba(255,255,255,0.06)',
+          display:'flex', alignItems:'center', gap:14 }}>
+          <MiniRing score={todayScore}/>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:700 }}>Today</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', marginTop:1 }}>In progress</div>
+          </div>
+          <div style={{ fontSize:22, fontWeight:900, color: scoreColor(todayScore) }}>{todayScore}%</div>
+        </div>
+
+        {/* History list */}
+        <div style={{ overflowY:'auto', flex:1 }}>
+          {history.length === 0 ? (
+            <div style={{ padding:'32px 22px', textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:13 }}>
+              History builds as you complete each day.<br/>Come back tomorrow.
+            </div>
+          ) : (
+            history.map((d, i) => {
+              const date  = new Date(d.date)
+              const label = `${days[date.getDay()]} ${date.getDate()} ${date.toLocaleString('default', { month:'short' })}`
+              return (
+                <div key={i} style={{ padding:'13px 22px', borderBottom:'1px solid rgba(255,255,255,0.04)',
+                  display:'flex', alignItems:'center', gap:14 }}>
+                  <MiniRing score={d.score}/>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600 }}>{label}</div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:1 }}>
+                      {d.done}/{d.total} tasks
+                    </div>
+                  </div>
+                  <div style={{ fontSize:22, fontWeight:900, color: scoreColor(d.score) }}>{d.score}%</div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -295,9 +390,10 @@ export default function App() {
   const { message: toast, show: showToast } = useToast()
   const now = useLiveClock()
 
-  const [showDone, setShowDone] = useState(false)
-  const [confetti, setConfetti] = useState(false)
-  const [tab, setTab]           = useState('home')
+  const [showDone, setShowDone]       = useState(false)
+  const [confetti, setConfetti]       = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [tab, setTab]                 = useState('home')
   const [newTask, setNewTask]   = useState('')
   const [eodText, setEodText]   = useState('')
   const [rollover, setRollover] = useState([])
@@ -410,6 +506,7 @@ export default function App() {
   const bgPhoto    = photos.length ? photos[photoIdx] : (dailyBg?.urlRegular ?? null)
   const dailyDone  = countDailyDone(state)
   const dailyTotal = DAILY_TASKS.length
+  const { done: scoreDone, total: scoreTotal, score } = computeScore(state)
   const greeting   = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr    = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })
   const timeStr    = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })
@@ -494,12 +591,13 @@ export default function App() {
 
             {/* ── Stats ── */}
             <div style={{ padding:'22px 22px 0', display:'flex', gap:12 }}>
-              {/* Score ring */}
-              <div style={{ ...darkGlass(0.32,22), borderRadius:22, flex:1,
+              {/* Score ring — clickable for history */}
+              <button onClick={() => setShowHistory(true)} style={{ ...darkGlass(0.32,22), borderRadius:22, flex:1,
                 display:'flex', alignItems:'center', justifyContent:'center', padding:'22px 16px',
-                animation:'cardEntrance .4s ease both' }}>
-                <ScoreRing done={dailyDone} total={dailyTotal}/>
-              </div>
+                animation:'cardEntrance .4s ease both', cursor:'pointer', border:'1px solid rgba(255,255,255,0.08)',
+                WebkitTapHighlightColor:'transparent' }}>
+                <ScoreRing done={scoreDone} total={scoreTotal} score={score}/>
+              </button>
               {/* Streak */}
               <div style={{ ...darkGlass(0.32,22), borderRadius:22,
                 display:'flex', alignItems:'center', justifyContent:'center', padding:'22px 24px',
@@ -729,7 +827,14 @@ export default function App() {
           ))}
         </nav>
 
-        {dailyBg && !photos.length && (
+        {showHistory && (
+        <HistoryModal
+          history={state.history ?? []}
+          todayScore={score}
+          onClose={() => setShowHistory(false)}/>
+      )}
+
+      {dailyBg && !photos.length && (
         <a href={dailyBg.photographerUrl + '?utm_source=morning_accountability&utm_medium=referral'}
           target="_blank" rel="noopener noreferrer"
           style={{ position:'fixed', bottom:'calc(env(safe-area-inset-bottom) + 62px)', left:14,

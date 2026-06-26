@@ -14,7 +14,25 @@ export function createDefaultState(today) {
     lastDate:       today,
     photos:         [],
     smartTasksDate: null,
+    history:        [],
   }
+}
+
+/**
+ * Computes the consistency score for a given state snapshot.
+ * Counts both daily habits and one-off tasks.
+ *
+ * @param {import('../types').AppState} state
+ * @returns {{ done: number, total: number, score: number }}
+ */
+export function computeScore(state) {
+  const dailyDone  = Object.keys(state.dailyChecked).length
+  const dailyTotal = DAILY_TASKS.length
+  const oneOffDone  = state.oneOffTasks.filter(t => t.done).length
+  const oneOffTotal = state.oneOffTasks.length
+  const done  = dailyDone + oneOffDone
+  const total = dailyTotal + oneOffTotal
+  return { done, total, score: total > 0 ? Math.round((done / total) * 100) : 0 }
 }
 
 /**
@@ -31,11 +49,18 @@ export function createDefaultState(today) {
  */
 export function migrateStateToDay(state, today) {
   if (state.lastDate === today) return state
+
+  // Snapshot yesterday's score before resetting
+  const { done, total, score } = computeScore(state)
+  const record = { date: state.lastDate, score, done, total }
+  const history = [record, ...(state.history ?? [])].slice(0, 90) // keep 90 days
+
   return {
     ...state,
     dailyChecked:   {},
     oneOffTasks:    state.oneOffTasks.filter(t => !t.done),
     lastDate:       today,
+    history,
   }
 }
 
