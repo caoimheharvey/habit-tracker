@@ -18,10 +18,11 @@ const DAY_OF_YEAR = Math.floor(
   (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
 )
 
-// ── FORM deep link ────────────────────────────────────────────────────────────
+// ── FORM — open App Store listing (no public URL scheme exists for this app) ──
+const FORM_APP_URL = 'https://apps.apple.com/app/form-swim-goggles/id1498219393'
 function openFORM(e) {
   e.preventDefault()
-  window.location.href = 'form-swimming://'
+  window.open(FORM_APP_URL, '_blank')
 }
 
 // ── Button styles ─────────────────────────────────────────────────────────────
@@ -279,7 +280,7 @@ function FormButton() {
       <span style={{ fontSize: 26 }}>🏊</span>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <span>Open FORM App</span>
-        <span style={{ fontSize: 11, opacity: 0.65, fontWeight: 700 }}>Track your swim workout</span>
+        <span style={{ fontSize: 11, opacity: 0.65, fontWeight: 700 }}>Opens App Store → tap Open</span>
       </div>
       <span style={{ marginLeft: 'auto', fontSize: 18, opacity: 0.7 }}>→</span>
     </a>
