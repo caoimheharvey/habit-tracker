@@ -1,4 +1,4 @@
-import { useSession, signIn, signOut } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { useAppState }  from '../src/hooks/useAppState'
@@ -12,6 +12,16 @@ import { WhimsyCard, Label, SectionHead, Toast, Spinner } from '../src/component
 
 import { DAILY_TASKS, ALL_DECO }  from '../src/lib/constants'
 import { countDailyDone, sanitiseTitle } from '../src/lib/state'
+
+const CANONICAL = 'https://habit-tracker-caoimheaudhdhabittracker.vercel.app'
+
+// Always initiate Google sign-in from the canonical domain so the state cookie
+// and the OAuth callback are on the same origin. Avoids "State cookie missing" errors
+// when accessing the app via a Vercel preview URL.
+function signInGoogle() {
+  const url = `${CANONICAL}/api/auth/signin/google?callbackUrl=${encodeURIComponent(CANONICAL)}`
+  window.location.href = url
+}
 
 const TODAY = new Date().toDateString()
 const DAY_OF_YEAR = Math.floor(
@@ -496,7 +506,7 @@ export default function App() {
                     {session?.error ? 'Your session expired — tap to refresh' : 'Smart calendar-aware tasks'}
                   </div>
                 </div>
-                <button onClick={() => signIn('google')} style={{ background: '#6B5280', color: 'white', border: 'none',
+                <button onClick={signInGoogle} style={{ background: '#6B5280', color: 'white', border: 'none',
                   borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer',
                   fontFamily: "'Nunito',sans-serif" }}>
                   {session?.error ? 'Reconnect' : 'Connect'}
