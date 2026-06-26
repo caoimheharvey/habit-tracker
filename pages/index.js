@@ -563,11 +563,17 @@ export default function App() {
                     boxShadow: `0 0 8px ${dailyDone===dailyTotal ? '#30D158' : '#00D4B8'}`,
                   }}/>
                 </div>
-                {DAILY_TASKS.map(t => (
+                {DAILY_TASKS.filter(t => !state.dailyChecked[t.id]).map(t => (
                   <TaskRow key={t.id} emoji={t.emoji} title={t.title} desc={t.desc}
-                    done={!!state.dailyChecked[t.id]} onToggle={() => handleToggleDaily(t.id)}
+                    done={false} onToggle={() => handleToggleDaily(t.id)}
                     by={t.by} color={t.color} now={now}/>
                 ))}
+                {dailyDone > 0 && (
+                  <div style={{ padding:'11px 18px', fontSize:12, color:'rgba(255,255,255,0.25)',
+                    fontWeight:500, borderTop:'1px solid rgba(255,255,255,0.04)' }}>
+                    {dailyDone} done ✓
+                  </div>
+                )}
               </GlassCard>
 
               {/* One-off tasks */}
