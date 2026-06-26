@@ -577,14 +577,15 @@ export default function App() {
               </GlassCard>
 
               {/* One-off tasks */}
-              {state.oneOffTasks.length > 0 && (
+              {state.oneOffTasks.some(t => !t.done) && (
                 <GlassCard style={{ animation:'cardEntrance .4s ease .15s both' }}>
                   <SectionLabel right={`${state.oneOffTasks.filter(t=>!t.done).length} pending`}>One-off tasks</SectionLabel>
-                  {state.oneOffTasks.map((t,i) => (
+                  {state.oneOffTasks.filter(t => !t.done).map((t,i) => (
                     <TaskRow key={`oneoff-${i}`} emoji={t.smart?'✦':'◆'}
                       title={t.title} desc={t.note??(t.smart?`From: ${t.triggerEvent??'calendar'}`:undefined)}
-                      done={t.done} isOneOff smart={t.smart}
-                      onToggle={() => handleToggleOneOff(i)} onDelete={() => handleDeleteOneOff(i)}/>
+                      done={false} isOneOff smart={t.smart}
+                      onToggle={() => handleToggleOneOff(state.oneOffTasks.indexOf(t))}
+                      onDelete={() => handleDeleteOneOff(state.oneOffTasks.indexOf(t))}/>
                   ))}
                 </GlassCard>
               )}
