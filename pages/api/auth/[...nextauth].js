@@ -1,6 +1,12 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
+// Force NextAuth to always use the configured URL, never the per-deployment Vercel preview URL.
+// Without this, VERCEL_URL leaks into the redirect_uri and breaks OAuth on every new deploy.
+if (process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL_INTERNAL = process.env.NEXTAUTH_URL
+}
+
 export const authOptions = {
   providers: [
     GoogleProvider({
