@@ -33,7 +33,6 @@ function SparkBurst({ active }) {
 export default function TaskRow({
   emoji, title, desc, done,
   onToggle, isOneOff, smart, onDelete,
-  hasForm, onForm,
 }) {
   const [justChecked, setJustChecked] = useState(false)
   const prevDone = useRef(done)
@@ -82,7 +81,6 @@ export default function TaskRow({
         transform:   'translateZ(0)',
       }}
     >
-      {/* Shimmer on check */}
       {justChecked && (
         <div aria-hidden="true" style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
@@ -99,8 +97,7 @@ export default function TaskRow({
       )}
 
       <span aria-hidden="true" style={{
-        fontSize: 26, flexShrink: 0,
-        transition: 'all 0.3s',
+        fontSize: 26, flexShrink: 0, transition: 'all 0.3s',
         animation: justChecked ? 'bounceIn 0.5s cubic-bezier(.34,1.56,.64,1)' : 'none',
       }}>
         {done ? '✅' : emoji}
@@ -111,54 +108,30 @@ export default function TaskRow({
           fontSize: 15, fontWeight: 800,
           textDecoration: done ? 'line-through' : 'none',
           color: done ? '#7A9E8A' : '#1A0A3D',
-          marginBottom: desc || hasForm ? 3 : 0,
+          marginBottom: desc ? 3 : 0,
           transition: 'all .25s',
         }}>
           {title}
         </div>
-
         {desc && !done && (
           <div style={{ fontSize: 12, color: '#9B8FB0', fontWeight: 600, lineHeight: 1.4 }}>
             {desc}
           </div>
         )}
-
-        {hasForm && !done && (
-          <a
-            href="#"
-            onClick={e => { e.stopPropagation(); onForm?.(e) }}
-            aria-label="Open FORM app"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              marginTop: 6,
-              background: 'linear-gradient(135deg, #1A7FC1, #0D5A8E)',
-              borderRadius: 999, padding: '5px 14px',
-              fontSize: 11, fontWeight: 800, color: 'white',
-              textDecoration: 'none',
-              boxShadow: '0 3px 10px rgba(26,127,193,0.4)',
-            }}
-          >
-            🏊 Open FORM
-          </a>
-        )}
       </div>
 
-      {/* Animated checkbox */}
-      <div
-        aria-hidden="true"
-        style={{
-          width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-          border: done ? 'none' : '2.5px solid #D8D0E8',
-          background: done
-            ? 'linear-gradient(135deg, #00C853, #00A846)'
-            : 'linear-gradient(135deg, #F8F5FF, #EDE8FF)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, color: 'white', fontWeight: 900,
-          transition: 'all .3s cubic-bezier(.34,1.56,.64,1)',
-          animation: justChecked ? 'checkBounce 0.6s cubic-bezier(.34,1.56,.64,1)' : 'none',
-          boxShadow: done ? '0 4px 14px rgba(0,200,83,0.45)' : '0 2px 8px rgba(108,99,255,0.1)',
-        }}
-      >
+      <div aria-hidden="true" style={{
+        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+        border: done ? 'none' : '2.5px solid #D8D0E8',
+        background: done
+          ? 'linear-gradient(135deg, #00C853, #00A846)'
+          : 'linear-gradient(135deg, #F8F5FF, #EDE8FF)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 18, color: 'white', fontWeight: 900,
+        transition: 'all .3s cubic-bezier(.34,1.56,.64,1)',
+        animation: justChecked ? 'checkBounce 0.6s cubic-bezier(.34,1.56,.64,1)' : 'none',
+        boxShadow: done ? '0 4px 14px rgba(0,200,83,0.45)' : '0 2px 8px rgba(108,99,255,0.1)',
+      }}>
         {done ? '✓' : ''}
       </div>
 
@@ -167,11 +140,9 @@ export default function TaskRow({
           onClick={e => { e.stopPropagation(); onDelete() }}
           aria-label={`Delete task: ${title}`}
           style={{
-            background: 'none', border: 'none',
-            color: '#D8D0E8', fontSize: 22,
-            cursor: 'pointer', padding: '0 2px',
-            flexShrink: 0, lineHeight: 1,
-            WebkitTapHighlightColor: 'transparent',
+            background: 'none', border: 'none', color: '#D8D0E8',
+            fontSize: 22, cursor: 'pointer', padding: '0 2px',
+            flexShrink: 0, lineHeight: 1, WebkitTapHighlightColor: 'transparent',
           }}
         >×</button>
       )}

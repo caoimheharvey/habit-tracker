@@ -4,7 +4,7 @@ export const DAILY_TASKS = [
   { id: 'stretch', emoji: '🧘', title: 'Stretch (5 min)',        desc: 'On the floor. Right now.' },
   { id: 'walk',    emoji: '🚶', title: 'Walk outside',           desc: '10 minutes minimum. Actual outside.' },
   { id: 'phone',   emoji: '📵', title: 'No phone until done',    desc: "You're literally on it. Put it down." },
-  { id: 'gym',     emoji: '🏋️', title: 'Get to the gym',         desc: 'Dressed, out the door, go.', hasForm: true },
+  { id: 'gym',     emoji: '🏋️', title: 'Get to the gym',         desc: 'Dressed, out the door, go.' },
   { id: 'protein', emoji: '🥚', title: 'High-protein breakfast', desc: 'Eggs, yogurt, shake. 8 minutes tops.' },
   { id: 'ready',   emoji: '✨', title: 'Get ready',              desc: 'Showered, dressed, like a person.' },
 ]

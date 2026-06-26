@@ -16,10 +16,6 @@ import { countDailyDone, sanitiseTitle } from '../src/lib/state'
 const TODAY       = new Date().toDateString()
 const DAY_OF_YEAR = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
 
-// FORM → App Store (no public URL scheme)
-const FORM_URL = 'https://apps.apple.com/app/form-swim-goggles/id1498219393'
-function openFORM(e) { e.preventDefault(); window.open(FORM_URL, '_blank') }
-
 // ── Floating background blobs ─────────────────────────────────────────────────
 function BackgroundBlobs() {
   return (
@@ -265,34 +261,6 @@ function Hero({ photos, photoIdx, onPrev, onNext, greeting, dateStr, streak, don
         </div>
       </div>
     </div>
-  )
-}
-
-// ── FORM button ───────────────────────────────────────────────────────────────
-function FormButton() {
-  const [pressed, setPressed] = useState(false)
-  return (
-    <a href="#" onClick={e => { setPressed(true); setTimeout(() => setPressed(false), 250); openFORM(e) }}
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14,
-        textDecoration: 'none',
-        background: 'linear-gradient(135deg, #1A7FC1 0%, #0D5A8E 100%)',
-        color: 'white', borderRadius: 22, padding: '18px 22px',
-        fontFamily: "'Nunito', sans-serif", fontWeight: 900,
-        boxShadow: pressed
-          ? '0 2px 10px rgba(26,127,193,0.3)'
-          : '0 8px 28px rgba(26,127,193,0.45)',
-        WebkitTapHighlightColor: 'transparent',
-        transform: pressed ? 'scale(0.96)' : 'scale(1)',
-        transition: 'all .2s cubic-bezier(.34,1.56,.64,1)',
-      }}>
-      <span style={{ fontSize: 28, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }}>🏊</span>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-        <span style={{ fontSize: 16, letterSpacing: '0.3px' }}>Open FORM App</span>
-        <span style={{ fontSize: 11, opacity: 0.6, fontWeight: 700 }}>Opens App Store → tap Open</span>
-      </div>
-      <span style={{ marginLeft: 'auto', fontSize: 20, opacity: 0.6 }}>→</span>
-    </a>
   )
 }
 
@@ -711,9 +679,6 @@ export default function App() {
               </div>
             )}
 
-            {/* FORM button */}
-            <FormButton/>
-
             {/* Reality check */}
             <RealityCard
               roast={roast} loading={roastLoading}
@@ -735,8 +700,6 @@ export default function App() {
                   desc={t.desc}
                   done={!!state.dailyChecked[t.id]}
                   onToggle={() => handleToggleDaily(t.id)}
-                  hasForm={t.hasForm}
-                  onForm={openFORM}
                 />
               ))}
             </SectionCard>
