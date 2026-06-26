@@ -317,9 +317,16 @@ export default function App() {
   }, [session, state?.smartTasksDate, pinMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const runSmartTaskFetch = useCallback(async () => {
+    showToast('🔍 Checking your calendar...')
     try {
       const ctxRes = await fetch('/api/context')
-      if (!ctxRes.ok) { handleSetSmartTasksDate(TODAY); return }
+      if (!ctxRes.ok) {
+        const { error } = await ctxRes.json().catch(() => ({}))
+        showToast(`📅 Calendar fetch failed: ${error ?? `HTTP ${ctxRes.status}`}`)
+        console.error('[context]', ctxRes.status, error)
+        // Don't set smartTasksDate — allow retry
+        return
+      }
       const ctx = await ctxRes.json()
 
       const taskRes = await fetch('/api/claude', {
@@ -332,18 +339,22 @@ export default function App() {
           existingOneOffs: state.oneOffTasks,
         }),
       })
-      if (!taskRes.ok) { handleSetSmartTasksDate(TODAY); return }
+      if (!taskRes.ok) {
+        showToast('✨ AI task generation failed — try again later')
+        return
+      }
       const { tasks = [] } = await taskRes.json()
 
       const added = handleMergeSmartTasks(tasks, TODAY)
       if (added > 0) {
-        setTimeout(() => showToast(`✨ ${added} smart task${added > 1 ? 's' : ''} added from your calendar`), 800)
+        setTimeout(() => showToast(`✨ ${added} smart task${added > 1 ? 's' : ''} added from your calendar`), 300)
       } else {
+        showToast('📅 No new tasks found in your calendar')
         handleSetSmartTasksDate(TODAY)
       }
     } catch (e) {
       console.error('Smart task fetch failed:', e)
-      handleSetSmartTasksDate(TODAY)
+      showToast('Could not reach server — check your connection')
     }
   }, [session, state, handleMergeSmartTasks, handleSetSmartTasksDate, showToast]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -580,7 +591,8 @@ export default function App() {
             {/* Smart task refresh */}
             {session && (
               <div style={{ textAlign: 'center' }}>
-                <button onClick={runSmartTaskFetch}
+                <button
+                  onClick={() => { handleSetSmartTasksDate(null); runSmartTaskFetch() }}
                   style={{ background: 'none', border: 'none', color: 'var(--toffee)', fontSize: 13,
                     fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   ✨ Refresh smart tasks from calendar
