@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400;1,600&family=Caveat:wght@500;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cream:     #FDF6ED;
+  --parchment: #F7EDD8;
+  --warm:      #F0E2C8;
+  --sand:      #E0C9A6;
+  --toffee:    #B8845A;
+  --caramel:   #96622E;
+  --moss:      #7A9E6E;
+  --moss-l:    #C0D9B0;
+  --blush:     #D4856E;
+  --blush-l:   #EEDDD8;
+  --lavender:  #B8A5C8;
+  --lav-l:     #EDE6F5;
+  --sky:       #8AAFCC;
+  --sky-l:     #D4E8F5;
+  --text:      #3D2B1A;
+  --muted:     #8C6E56;
+  --white:     #FFFDF5;
+  --shadow:    rgba(120,80,40,0.13);
+}
+
+html, body {
+  background:             var(--cream);
+  color:                  var(--text);
+  font-family:            'Nunito', sans-serif;
+  min-height:             100vh;
+  overflow-x:             hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Animations ──────────────────────────────────────────── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-8px) rotate(3deg); }
+}
+
+@keyframes floatR {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-6px) rotate(-4deg); }
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  60%  { transform: scale(1.15) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%       { transform: rotate(-8deg); }
+  75%       { transform: rotate(8deg); }
+}
+
+/* ── Focus ring (accessibility) ──────────────────────────── */
+:focus-visible {
+  outline:        3px solid var(--toffee);
+  outline-offset: 2px;
+  border-radius:  4px;
+}
