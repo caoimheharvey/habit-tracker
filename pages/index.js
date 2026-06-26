@@ -440,13 +440,22 @@ export default function App() {
                 {greeting}
               </div>
             </div>
-            <div style={{ textAlign:'right' }}>
-              <div style={{ fontSize:28, fontWeight:900, color:'#FFFFFF', letterSpacing:'-1px', lineHeight:1 }}>
-                {timeStr}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
+              <div style={{ textAlign:'right' }}>
+                <div style={{ fontSize:28, fontWeight:900, color:'#FFFFFF', letterSpacing:'-1px', lineHeight:1 }}>
+                  {timeStr}
+                </div>
+                <div style={{ fontSize:11, color:'var(--text3)', fontWeight:500, marginTop:2 }}>
+                  {dailyDone === dailyTotal ? 'All done ✓' : `${dailyTotal - dailyDone} remaining`}
+                </div>
               </div>
-              <div style={{ fontSize:11, color:'var(--text3)', fontWeight:500, marginTop:2 }}>
-                {dailyDone === dailyTotal ? 'All done ✓' : `${dailyTotal - dailyDone} remaining`}
-              </div>
+              <button onClick={lock} style={{
+                background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)',
+                color:'rgba(255,255,255,0.45)', fontFamily:'Inter, sans-serif',
+                fontSize:11, fontWeight:600, padding:'5px 12px',
+                borderRadius:999, cursor:'pointer', letterSpacing:'0.3px',
+                WebkitTapHighlightColor:'transparent',
+              }}>Lock</button>
             </div>
           </div>
 
@@ -598,10 +607,9 @@ export default function App() {
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
               flexWrap:'wrap', gap:8, paddingBottom:8 }}>
               <PhotoManager photos={photos} onRemove={handleRemovePhoto} fileRef={fileRef}/>
-              <div style={{ display:'flex', gap:8 }}>
-                <button onClick={lock} style={styles.chipBtn}>Lock</button>
-                {session && <button onClick={() => signOut()} style={styles.chipBtn}>Sign out</button>}
-              </div>
+              {session && (
+                <button onClick={() => signOut()} style={styles.chipBtn}>Google Sign Out</button>
+              )}
             </div>
 
           </div>

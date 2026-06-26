@@ -1,14 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
 
-const DECO = ['🍄','🌿','🌸','🌰','🕯️','🍃','🌼','☕']
-
-/**
- * @param {{
- *   error: string,
- *   loading: boolean,
- *   onVerify: (code: string) => void,
- * }} props
- */
 export default function TotpScreen({ error, loading, onVerify }) {
   const [digits, setDigits] = useState(['','','','','',''])
   const inputRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()]
@@ -18,64 +9,86 @@ export default function TotpScreen({ error, loading, onVerify }) {
     const next = [...digits]
     next[i] = digit
     setDigits(next)
-
-    if (digit && i < 5) {
-      inputRefs[i + 1].current?.focus()
-    }
-
-    // Auto-submit when all 6 filled
-    if (digit && next.every(d => d !== '')) {
-      onVerify(next.join(''))
-    }
+    if (digit && i < 5) inputRefs[i + 1].current?.focus()
+    if (digit && next.every(d => d !== '')) onVerify(next.join(''))
   }, [digits, onVerify]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleKeyDown = useCallback((i, e) => {
-    if (e.key === 'Backspace' && !digits[i] && i > 0) {
-      inputRefs[i - 1].current?.focus()
-    }
+    if (e.key === 'Backspace' && !digits[i] && i > 0) inputRefs[i - 1].current?.focus()
   }, [digits]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePaste = useCallback((e) => {
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
-    if (pasted.length === 6) {
-      setDigits(pasted.split(''))
-      onVerify(pasted)
-    }
+    if (pasted.length === 6) { setDigits(pasted.split('')); onVerify(pasted) }
   }, [onVerify])
 
-  const shaking = !!error
+  const allFilled = digits.every(d => d)
 
   return (
-    <div style={styles.root}>
-      {DECO.map((d, i) => (
-        <div key={i} aria-hidden="true" style={{
-          ...styles.deco,
-          top:       `${8 + i * 11}%`,
-          left:      i % 2 === 0 ? `${5 + i * 3}%` : undefined,
-          right:     i % 2 !== 0 ? `${5 + i * 3}%` : undefined,
-          fontSize:  i % 2 === 0 ? 28 : 20,
-          animation: `${i % 2 === 0 ? 'float' : 'floatR'} ${3 + i * 0.4}s ease-in-out infinite`,
-          animationDelay: `${i * 0.35}s`,
-        }}>{d}</div>
-      ))}
+    <div style={{
+      minHeight: '100vh',
+      background: '#0B0B0F',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: 32, position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Background glow */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', top: '20%', left: '50%',
+        transform: 'translateX(-50%)',
+        width: 320, height: 320, borderRadius: '50%',
+        background: 'rgba(0,212,184,0.06)',
+        filter: 'blur(60px)', pointerEvents: 'none',
+      }}/>
 
-      <div style={styles.content}>
-        <div aria-hidden="true" style={{ fontSize: 56, marginBottom: 16, animation: 'float 3s ease-in-out infinite' }}>
-          🏡
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        position: 'relative', zIndex: 1,
+        width: '100%', maxWidth: 320, textAlign: 'center',
+      }}>
+        {/* Icon */}
+        <div style={{
+          width: 64, height: 64, borderRadius: 20,
+          background: 'rgba(0,212,184,0.1)',
+          border: '1px solid rgba(0,212,184,0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 28, marginBottom: 28,
+          boxShadow: '0 0 32px rgba(0,212,184,0.15)',
+        }}>
+          ☀️
         </div>
 
-        <h1 style={styles.title}>Welcome back 🌿</h1>
-        <p style={styles.subtitle}>Enter your 6-digit authenticator code</p>
+        <div style={{
+          fontSize: 10, fontWeight: 700, color: 'rgba(0,212,184,0.7)',
+          textTransform: 'uppercase', letterSpacing: '3px', marginBottom: 10,
+        }}>
+          Morning Accountability
+        </div>
 
+        <h1 style={{
+          fontSize: 26, fontWeight: 800, color: '#FFFFFF',
+          letterSpacing: '-0.5px', marginBottom: 6,
+        }}>
+          Welcome back
+        </h1>
+
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontWeight: 500, marginBottom: 32 }}>
+          Enter your 6-digit authenticator code
+        </p>
+
+        {/* Error */}
         {error && (
-          <p role="alert" style={{ ...styles.error, animation: shaking ? 'wiggle .4s ease' : 'none' }}>
+          <p role="alert" style={{
+            fontSize: 13, color: '#FF453A', fontWeight: 600,
+            marginBottom: 16, animation: 'pulse .4s ease',
+          }}>
             {error}
           </p>
         )}
 
-        {/* 6-digit input boxes */}
+        {/* Digit inputs */}
         <div
-          style={{ display: 'flex', gap: 10, marginBottom: 32 }}
+          style={{ display: 'flex', gap: 8, marginBottom: 28 }}
           onPaste={handlePaste}
           role="group"
           aria-label="6-digit authenticator code"
@@ -93,112 +106,54 @@ export default function TotpScreen({ error, loading, onVerify }) {
               autoFocus={i === 0}
               aria-label={`Digit ${i + 1}`}
               style={{
-                width:        44,
-                height:       52,
-                textAlign:    'center',
-                fontSize:     22,
-                fontWeight:   900,
-                fontFamily:   "'Nunito', sans-serif",
-                background:   d ? 'rgba(184,132,90,0.12)' : 'rgba(255,253,245,0.85)',
-                border:       `2px solid ${d ? 'var(--toffee)' : 'rgba(184,132,90,0.3)'}`,
-                borderRadius: 14,
-                color:        'var(--text)',
-                outline:      'none',
-                transition:   'all .15s',
-                boxShadow:    d ? '0 2px 8px rgba(184,132,90,0.2)' : '0 2px 8px rgba(120,80,40,0.08)',
-                caretColor:   'var(--toffee)',
-                animation:    shaking ? 'wiggle .4s ease' : 'none',
+                width: 42, height: 52, textAlign: 'center',
+                fontSize: 22, fontWeight: 800,
+                fontFamily: 'Inter, -apple-system, sans-serif',
+                background: d ? 'rgba(0,212,184,0.1)' : 'rgba(255,255,255,0.04)',
+                border: `1.5px solid ${d ? 'rgba(0,212,184,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                borderRadius: 14, color: '#FFFFFF', outline: 'none',
+                transition: 'all .15s',
+                boxShadow: d ? '0 0 12px rgba(0,212,184,0.2)' : 'none',
+                caretColor: '#00D4B8',
               }}
             />
           ))}
         </div>
 
+        {/* Loading */}
         {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--muted)',
-            fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
-            <div style={{ width: 14, height: 14, border: '2px solid var(--sand)',
-              borderTopColor: 'var(--toffee)', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
-            Verifying...
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8,
+            color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
+            <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.15)',
+              borderTopColor: '#00D4B8', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
+            Verifying…
           </div>
         )}
 
+        {/* Submit */}
         <button
-          onClick={() => digits.every(d => d) && onVerify(digits.join(''))}
-          disabled={loading || digits.some(d => !d)}
+          onClick={() => allFilled && onVerify(digits.join(''))}
+          disabled={loading || !allFilled}
           style={{
-            width:        '100%',
-            background:   'linear-gradient(135deg, var(--toffee), var(--caramel))',
-            color:        'var(--white)',
-            border:       'none',
-            borderRadius: 18,
-            padding:      '15px 0',
-            fontFamily:   "'Nunito', sans-serif",
-            fontSize:     16,
-            fontWeight:   900,
-            cursor:       digits.every(d => d) && !loading ? 'pointer' : 'not-allowed',
-            opacity:      digits.every(d => d) && !loading ? 1 : 0.5,
-            boxShadow:    '0 4px 18px rgba(140,98,46,.35)',
-            WebkitTapHighlightColor: 'transparent',
-            transition:   'opacity .2s',
+            width: '100%',
+            background: allFilled && !loading ? '#00D4B8' : 'rgba(255,255,255,0.06)',
+            color: allFilled && !loading ? '#000' : 'rgba(255,255,255,0.25)',
+            border: 'none', borderRadius: 16, padding: '15px 0',
+            fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700,
+            cursor: allFilled && !loading ? 'pointer' : 'not-allowed',
+            transition: 'all .2s',
+            boxShadow: allFilled && !loading ? '0 4px 20px rgba(0,212,184,0.35)' : 'none',
+            letterSpacing: '0.2px',
           }}
         >
-          Unlock the cottage ✨
+          Unlock
         </button>
 
-        <p style={{ marginTop: 20, fontSize: 11, color: 'var(--muted)', fontWeight: 600, textAlign: 'center', lineHeight: 1.6 }}>
-          Open Google Authenticator and enter the<br/>6-digit code for <strong>Morning Accountability</strong>
+        <p style={{ marginTop: 20, fontSize: 11, color: 'rgba(255,255,255,0.2)',
+          fontWeight: 500, lineHeight: 1.7 }}>
+          Open Google Authenticator and enter the<br/>code for <strong style={{ color: 'rgba(255,255,255,0.4)' }}>Morning Accountability</strong>
         </p>
       </div>
     </div>
   )
-}
-
-const styles = {
-  root: {
-    minHeight:      '100vh',
-    background:     'linear-gradient(160deg, #F0E8D5 0%, #E8D5B5 40%, #D5C49A 100%)',
-    display:        'flex',
-    flexDirection:  'column',
-    alignItems:     'center',
-    justifyContent: 'center',
-    padding:        32,
-    position:       'relative',
-    overflow:       'hidden',
-  },
-  deco: {
-    position:      'absolute',
-    opacity:       0.25,
-    userSelect:    'none',
-    pointerEvents: 'none',
-  },
-  content: {
-    display:       'flex',
-    flexDirection: 'column',
-    alignItems:    'center',
-    position:      'relative',
-    zIndex:        10,
-    width:         '100%',
-    maxWidth:      320,
-    textAlign:     'center',
-  },
-  title: {
-    fontFamily:   "'Playfair Display', serif",
-    fontStyle:    'italic',
-    fontSize:     28,
-    color:        '#3D2B1A',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize:     14,
-    color:        '#8C6E56',
-    fontWeight:   700,
-    marginBottom: 24,
-  },
-  error: {
-    fontSize:     13,
-    color:        '#C4614A',
-    fontWeight:   800,
-    marginBottom: 12,
-    minHeight:    20,
-  },
 }
