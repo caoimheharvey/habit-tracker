@@ -1,11 +1,9 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
-// Vercel injects VERCEL_URL (per-deployment hash URL) which NextAuth picks up when
-// NEXTAUTH_URL is missing. Force the stable production URL using Vercel's own system var.
-if (!process.env.NEXTAUTH_URL && process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-}
+// Always use the stable production URL regardless of which Vercel deployment is serving the request.
+// Per-deployment preview URLs change on every deploy and break Google OAuth.
+process.env.NEXTAUTH_URL = 'https://habit-tracker-caoimheaudhdhabittracker.vercel.app'
 
 export const authOptions = {
   providers: [
