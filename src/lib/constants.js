@@ -28,11 +28,11 @@ export const ALL_DECO = [
 ]
 
 export const FALLBACK_ROASTS = [
-  "You told yourself yesterday you'd start. Today is that day. Drink water. Now.",
-  "The gym won't feel good until you're there. Shoes on, feelings later.",
-  "8 minutes for eggs. You've spent longer negotiating with yourself. Go cook.",
-  "Nothing changes if nothing changes. Walk outside. That's the whole plan.",
-  "The version of you who does the work doesn't wait to feel ready. They go first.",
+  "You're already on your phone. That's cute. Put it down.",
+  "The gym doesn't care about your mood. Go anyway.",
+  "You've spent more time thinking about this than it would've taken to do it. Move.",
+  "Still in bed? Cool story. Get up.",
+  "Yesterday you said tomorrow. It's tomorrow. Shoes on.",
 ]
 
 /** @returns {string} */

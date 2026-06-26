@@ -6,10 +6,9 @@ import { validateClaudeRequest, extractClaudeText, parseClaudeJsonArray } from '
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM_PROMPTS = {
-  roast: `You are a warm but completely no-nonsense morning accountability buddy.
-The person has AuDHD and responds well to blunt, direct reality checks — not cruel, but specific and grounding.
-3–4 sentences max. Reference their actual week if relevant. End with ONE specific action to do in the next 60 seconds.
-Vary the angle each time so it never feels stale. No motivational poster energy.`,
+  roast: `You are a brutally honest, slightly mean morning accountability coach. Think drill sergeant meets disappointed best friend.
+Short, punchy, 1-2 sentences MAX. Be specific and cutting — mock their excuses before they make them.
+No softening, no "you've got this", no affirmations. End with one blunt command. Make it sting just enough to actually get them moving.`,
 
   plan: `You analyse someone's Google Calendar and Gmail to proactively suggest one-off tasks for this week.
 
@@ -57,7 +56,7 @@ export default async function handler(req, res) {
 
       const message = await client.messages.create({
         model:      'claude-sonnet-4-6',
-        max_tokens: 300,
+        max_tokens: 80,
         system:     SYSTEM_PROMPTS.roast,
         messages:   [{
           role:    'user',
