@@ -1,9 +1,7 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
-// Always use the stable production URL regardless of which Vercel deployment is serving the request.
-// Per-deployment preview URLs change on every deploy and break Google OAuth.
-process.env.NEXTAUTH_URL = 'https://habit-tracker-caoimheaudhdhabittracker.vercel.app'
+const CANONICAL_URL = 'https://habit-tracker-caoimheaudhdhabittracker.vercel.app'
 
 export const authOptions = {
   providers: [
@@ -19,13 +17,16 @@ export const authOptions = {
             'https://www.googleapis.com/auth/calendar.readonly',
             'https://www.googleapis.com/auth/gmail.readonly',
           ].join(' '),
-          access_type: 'offline',
-          prompt:      'consent',
+          access_type:  'offline',
+          prompt:       'consent',
+          redirect_uri: `${CANONICAL_URL}/api/auth/callback/google`,
         },
       },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret:  process.env.NEXTAUTH_SECRET,
+  // Tell NextAuth to use the stable URL for all internal URL construction
+  url: CANONICAL_URL,
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
