@@ -171,47 +171,120 @@ function StreakBadge({ streak }) {
   )
 }
 
+// ── Live clock + next deadline ────────────────────────────────────────────────
+function useLiveClock() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 10000) // update every 10s
+    return () => clearInterval(t)
+  }, [])
+  return now
+}
+
+function nextDeadline(dailyChecked, now) {
+  const tasks = DAILY_TASKS.filter(t => !dailyChecked[t.id] && t.by)
+  if (!tasks.length) return null
+  let closest = null
+  let closestMs = Infinity
+  for (const t of tasks) {
+    const [h, m] = t.by.split(':').map(Number)
+    const d = new Date(now); d.setHours(h, m, 0, 0)
+    const diff = d - now
+    if (diff < closestMs) { closestMs = diff; closest = { ...t, diffMs: diff } }
+  }
+  return closest
+}
+
+function formatCountdown(ms) {
+  if (ms < 0) return 'OVERDUE'
+  const m = Math.floor(ms / 60000)
+  if (m < 60) return `${m}m`
+  return `${Math.floor(m / 60)}h ${m % 60}m`
+}
+
+function DeadlineBanner({ dailyChecked, now }) {
+  const next = nextDeadline(dailyChecked, now)
+  if (!next) return null
+
+  const isLate   = next.diffMs < 0
+  const isUrgent = next.diffMs < 10 * 60 * 1000
+  const isSoon   = next.diffMs < 25 * 60 * 1000
+
+  const bg    = isLate   ? 'linear-gradient(135deg, #FF2D78, #CC0055)'
+              : isUrgent ? 'linear-gradient(135deg, #FF5F3D, #E84520)'
+              : isSoon   ? 'linear-gradient(135deg, #FF9500, #E07800)'
+              : 'rgba(255,255,255,0.1)'
+  const color = isLate || isUrgent || isSoon ? 'white' : 'rgba(255,255,255,0.8)'
+
+  const [h, m] = next.by.split(':').map(Number)
+  const suffix = h < 12 ? 'am' : 'pm'
+  const label  = `${h % 12 || 12}:${String(m).padStart(2,'0')}${suffix}`
+
+  return (
+    <div style={{
+      margin: '0 0 0 0', padding: '10px 20px',
+      background: bg,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      animation: isUrgent || isLate ? 'pulse 1.2s ease-in-out infinite' : 'none',
+      zIndex: 2, position: 'relative',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 16 }}>{isLate ? '🚨' : isUrgent ? '⚡' : '⏰'}</span>
+        <div>
+          <div style={{ color, fontSize: 12, fontWeight: 900, lineHeight: 1 }}>
+            {isLate ? 'LATE: ' : 'Next: '}{next.emoji} {next.title}
+          </div>
+          <div style={{ color: isLate || isUrgent || isSoon ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)',
+            fontSize: 11, fontWeight: 700, marginTop: 1 }}>
+            by {label}
+          </div>
+        </div>
+      </div>
+      <div style={{
+        fontFamily: "'Poppins', sans-serif",
+        fontSize: 20, fontWeight: 900, color,
+        textShadow: isLate || isUrgent ? '0 0 20px rgba(255,255,255,0.5)' : 'none',
+      }}>
+        {isLate ? 'GO' : formatCountdown(next.diffMs)}
+      </div>
+    </div>
+  )
+}
+
 // ── Hero section ──────────────────────────────────────────────────────────────
-function Hero({ photos, photoIdx, onPrev, onNext, greeting, dateStr, streak, done, total }) {
+function Hero({ photos, photoIdx, onPrev, onNext, greeting, dateStr, streak, done, total, dailyChecked, now }) {
   const hasPhotos = photos.length > 0
+  const timeStr   = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-      {/* Dark gradient background */}
       <div style={{
         position: 'relative', zIndex: 1,
         background: 'linear-gradient(160deg, #12002E 0%, #0A1040 45%, #1A0030 100%)',
-        padding: hasPhotos ? '0 0 28px' : '52px 24px 36px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}>
-        {/* Animated background orbs */}
+        {/* Animated orbs */}
         {[
-          { size: 200, top: -60, left: -50, color: 'rgba(108,99,255,0.3)' },
-          { size: 160, top: 30, right: -60, color: 'rgba(255,45,120,0.2)' },
-          { size: 140, bottom: -40, left: '35%', color: 'rgba(0,200,83,0.15)' },
+          { size: 220, top: -70, left: -60, color: 'rgba(108,99,255,0.35)' },
+          { size: 180, top: 20,  right: -70, color: 'rgba(255,45,120,0.22)' },
+          { size: 150, bottom: -50, left: '30%', color: 'rgba(0,200,255,0.18)' },
         ].map((o, i) => (
           <div key={i} aria-hidden="true" style={{
             position: 'absolute', borderRadius: '50%',
             width: o.size, height: o.size,
             top: o.top, left: o.left, right: o.right, bottom: o.bottom,
-            background: o.color, filter: 'blur(40px)',
+            background: o.color, filter: 'blur(45px)',
             animation: `blobFloat ${6 + i * 2}s ease-in-out infinite`,
-            animationDelay: `${i * 1.8}s`,
-            pointerEvents: 'none',
+            animationDelay: `${i * 1.8}s`, pointerEvents: 'none',
           }}/>
         ))}
 
-        {/* Photo (if available) */}
+        {/* Photo */}
         {hasPhotos && (
-          <div style={{ position: 'relative', width: '100%', height: 200 }}>
-            <img
-              key={photoIdx}
-              src={photos[photoIdx]}
-              alt=""
-              aria-hidden="true"
+          <div style={{ position: 'relative', width: '100%', height: 180 }}>
+            <img key={photoIdx} src={photos[photoIdx]} alt="" aria-hidden="true"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
-                objectFit: 'cover', opacity: 0.35, animation: 'fadePhoto .5s ease' }}
-            />
+                objectFit: 'cover', opacity: 0.3, animation: 'fadePhoto .5s ease' }}/>
             {photos.length > 1 && <>
               <button onClick={onPrev} aria-label="Previous photo"
                 style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%',
@@ -221,7 +294,7 @@ function Hero({ photos, photoIdx, onPrev, onNext, greeting, dateStr, streak, don
                 style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '30%',
                   background: 'none', border: 'none', cursor: 'pointer', zIndex: 10,
                   WebkitTapHighlightColor: 'transparent' }}/>
-              <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0,
+              <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0,
                 display: 'flex', justifyContent: 'center', gap: 5 }}>
                 {photos.map((_, i) => (
                   <div key={i} style={{ height: 4, borderRadius: 999, transition: 'all .3s',
@@ -233,33 +306,39 @@ function Hero({ photos, photoIdx, onPrev, onNext, greeting, dateStr, streak, don
           </div>
         )}
 
-        {/* Date + greeting */}
-        <div style={{ zIndex: 2, textAlign: 'center', marginBottom: hasPhotos ? 0 : 24 }}>
-          <div style={{
-            display: 'inline-block', background: 'rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(10px)',
-            color: 'rgba(255,255,255,0.65)', fontSize: 10, fontWeight: 800,
-            letterSpacing: '2.5px', textTransform: 'uppercase',
-            padding: '5px 16px', borderRadius: 999, marginBottom: 10,
-          }}>
-            {dateStr}
+        {/* Header row: date + live clock */}
+        <div style={{ zIndex: 2, width: '100%', padding: '20px 20px 0',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 800,
+              letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 4 }}>
+              {dateStr}
+            </div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic',
+              fontSize: 22, color: 'rgba(255,255,255,0.92)',
+              textShadow: '0 2px 16px rgba(108,99,255,0.6)' }}>
+              {greeting} ✨
+            </div>
           </div>
+          {/* Live clock */}
           <div style={{
-            fontFamily: "'Playfair Display', serif", fontStyle: 'italic',
-            fontSize: 24, color: 'rgba(255,255,255,0.92)',
-            textShadow: '0 2px 20px rgba(108,99,255,0.6)',
-          }}>
-            {greeting} ✨
-          </div>
+            fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 900,
+            background: 'linear-gradient(135deg, #00C8FF, #6C63FF)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            letterSpacing: '-1px',
+          }}>{timeStr}</div>
         </div>
 
         {/* Stats row */}
         <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 20, width: '100%', marginTop: 20, padding: '0 16px' }}>
+          gap: 16, width: '100%', padding: '18px 16px 24px' }}>
           <RainbowRing done={done} total={total}/>
           <StreakBadge streak={streak}/>
         </div>
       </div>
+
+      {/* Deadline banner — sits between hero and content */}
+      <DeadlineBanner dailyChecked={dailyChecked} now={now}/>
     </div>
   )
 }
@@ -448,6 +527,8 @@ export default function App() {
   const { data: session, status } = useSession()
   const { message: toast, show: showToast } = useToast()
 
+  const now = useLiveClock()
+
   const [showDone, setShowDone]   = useState(false)
   const [confetti, setConfetti]   = useState(false)
   const [tab, setTab]             = useState('home')
@@ -569,7 +650,6 @@ export default function App() {
   const photos     = state.photos ?? []
   const dailyDone  = countDailyDone(state)
   const dailyTotal = DAILY_TASKS.length
-  const now        = new Date()
   const greeting   = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr    = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -645,6 +725,7 @@ export default function App() {
             photos={photos} photoIdx={photoIdx} onPrev={prevPhoto} onNext={nextPhoto}
             greeting={greeting} dateStr={dateStr}
             streak={state.streak} done={dailyDone} total={dailyTotal}
+            dailyChecked={state.dailyChecked} now={now}
           />
 
           <div style={{ padding: '18px 16px 8px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -700,6 +781,9 @@ export default function App() {
                   desc={t.desc}
                   done={!!state.dailyChecked[t.id]}
                   onToggle={() => handleToggleDaily(t.id)}
+                  by={t.by}
+                  color={t.color}
+                  now={now}
                 />
               ))}
             </SectionCard>
