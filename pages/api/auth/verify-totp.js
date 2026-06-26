@@ -27,20 +27,28 @@ export default function handler(req, res) {
     return res.status(405).end()
   }
 
-  const secret = process.env.TOTP_SECRET
-  if (!secret) return res.status(500).json({ error: 'TOTP not configured' })
+  try {
+    const secret    = process.env.TOTP_SECRET
+    const authSecret = process.env.NEXTAUTH_SECRET
 
-  const { code } = req.body ?? {}
-  if (typeof code !== 'string' || !/^\d{6}$/.test(code)) {
-    return res.status(400).json({ error: 'Invalid code format' })
+    if (!secret)     return res.status(500).json({ error: 'TOTP_SECRET is not configured' })
+    if (!authSecret) return res.status(500).json({ error: 'NEXTAUTH_SECRET is not configured' })
+
+    const { code } = req.body ?? {}
+    if (typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+      return res.status(400).json({ error: 'Invalid code format' })
+    }
+
+    if (!totpVerify(secret, code)) {
+      return res.status(401).json({ error: 'Invalid code — check the time on your device and try again' })
+    }
+
+    const expiresAt = Date.now() + SESSION_DURATION_MS
+    const expires   = new Date(expiresAt)
+    res.setHeader('Set-Cookie', setCookieHeader(signedCookie(expiresAt), expires))
+    return res.json({ ok: true })
+  } catch (err) {
+    console.error('[verify-totp]', err)
+    return res.status(500).json({ error: `Server error: ${err.message}` })
   }
-
-  if (!totpVerify(secret, code)) {
-    return res.status(401).json({ error: 'Invalid code' })
-  }
-
-  const expiresAt = Date.now() + SESSION_DURATION_MS
-  const expires   = new Date(expiresAt)
-  res.setHeader('Set-Cookie', setCookieHeader(signedCookie(expiresAt), expires))
-  return res.json({ ok: true })
 }

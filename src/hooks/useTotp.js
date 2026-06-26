@@ -26,14 +26,25 @@ export function useTotp() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ code }),
       })
+
       if (res.ok) {
         setMode('unlocked')
-      } else {
+        return
+      }
+
+      // Try to parse JSON error; fall back to raw text so we see the real problem
+      const contentType = res.headers.get('content-type') ?? ''
+      if (contentType.includes('application/json')) {
         const { error: msg } = await res.json()
         setError(msg ?? 'Invalid code')
+      } else {
+        const text = await res.text()
+        console.error('[verify-totp] unexpected response:', res.status, text.slice(0, 300))
+        setError(`Error ${res.status} — check Vercel logs`)
       }
-    } catch {
-      setError('Network error — try again')
+    } catch (err) {
+      console.error('[verify-totp] fetch failed:', err)
+      setError('Could not reach server — check your connection')
     } finally {
       setLoading(false)
     }
