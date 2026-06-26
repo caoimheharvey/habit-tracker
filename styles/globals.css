@@ -1,48 +1,58 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400;1,600&family=Caveat:wght@500;700&family=Poppins:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital@1&display=swap');
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  /* Base */
-  --cream:     #FDF6ED;
-  --parchment: #F7EDD8;
-  --warm:      #F0E2C8;
-  --sand:      #E0C9A6;
-  --toffee:    #B8845A;
-  --caramel:   #96622E;
-  --moss:      #7A9E6E;
-  --moss-l:    #C0D9B0;
-  --blush:     #D4856E;
-  --blush-l:   #EEDDD8;
-  --lavender:  #B8A5C8;
-  --lav-l:     #EDE6F5;
-  --sky:       #8AAFCC;
-  --sky-l:     #D4E8F5;
-  --text:      #1A0A3D;
-  --muted:     #7A6E8C;
-  --white:     #FFFDF5;
-  --shadow:    rgba(26,10,61,0.12);
+  --bg:        #0B0B0F;
+  --surface:   #16161E;
+  --surface2:  #1E1E28;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
 
-  /* Dopamine palette */
-  --punch:      #FF5F3D;
-  --punch-l:    #FFF0ED;
-  --electric:   #6C63FF;
-  --electric-l: #F0EFFF;
-  --neon:       #00C853;
-  --neon-l:     #E8FFF2;
-  --fire:       #FF9500;
-  --fire-l:     #FFF5E5;
-  --hot-pink:   #FF2D78;
-  --pink-l:     #FFF0F5;
-  --cyan:       #00C8FF;
-  --deep:       #1A0A3D;
-  --deep2:      #0A1A4E;
+  --text:      #FFFFFF;
+  --text2:     rgba(255,255,255,0.55);
+  --text3:     rgba(255,255,255,0.28);
+
+  --teal:      #00D4B8;
+  --teal-dim:  rgba(0,212,184,0.15);
+  --gold:      #F5A623;
+  --gold-dim:  rgba(245,166,35,0.15);
+  --green:     #30D158;
+  --green-dim: rgba(48,209,88,0.12);
+  --red:       #FF453A;
+  --red-dim:   rgba(255,69,58,0.15);
+  --orange:    #FF9F0A;
+  --orange-dim:rgba(255,159,10,0.15);
+
+  /* legacy aliases so shared components don't break */
+  --cream: #0B0B0F;
+  --white: #16161E;
+  --warm:  #1E1E28;
+  --sand:  rgba(255,255,255,0.1);
+  --toffee: #F5A623;
+  --caramel: #E09010;
+  --moss:  #30D158;
+  --moss-l: rgba(48,209,88,0.15);
+  --blush: #FF453A;
+  --blush-l: rgba(255,69,58,0.12);
+  --lavender: #9B8FB0;
+  --lav-l: rgba(155,143,176,0.12);
+  --sky: #00D4B8;
+  --sky-l: rgba(0,212,184,0.12);
+  --muted: rgba(255,255,255,0.45);
+  --shadow: rgba(0,0,0,0.5);
+  --electric: #00D4B8;
+  --electric-l: rgba(0,212,184,0.12);
+  --neon: #30D158;
+  --punch: #FF453A;
+  --punch-l: rgba(255,69,58,0.12);
+  --text-css: #FFFFFF;
 }
 
 html, body {
-  background:             #F5F0FF;
+  background:             var(--bg);
   color:                  var(--text);
-  font-family:            'Nunito', sans-serif;
+  font-family:            'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   min-height:             100vh;
   overflow-x:             hidden;
   -webkit-font-smoothing: antialiased;
@@ -51,18 +61,18 @@ html, body {
 /* ── Animations ──────────────────────────────────────────── */
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%       { transform: translateY(-10px) rotate(4deg); }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
 }
 
 @keyframes bounceIn {
-  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
-  60%  { transform: scale(1.2) rotate(3deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
@@ -75,40 +85,22 @@ html, body {
   to   { opacity: 1; }
 }
 
-@keyframes popIn {
-  0%   { transform: scale(0.7); opacity: 0; }
-  70%  { transform: scale(1.08); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes checkBounce {
   0%   { transform: scale(1); }
-  20%  { transform: scale(1.5) rotate(-10deg); }
-  50%  { transform: scale(0.85) rotate(5deg); }
-  75%  { transform: scale(1.15); }
+  30%  { transform: scale(1.35); }
+  60%  { transform: scale(0.9); }
   100% { transform: scale(1); }
 }
 
 @keyframes rowFlash {
-  0%   { background: white; }
-  30%  { background: #E0FFF0; }
-  100% { background: var(--row-done-bg, #F4FFF8); }
-}
-
-@keyframes streakPop {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  30%       { transform: scale(1.15) rotate(-8deg); }
-  60%       { transform: scale(1.1) rotate(6deg); }
-}
-
-@keyframes confettiDrop {
-  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-  100% { transform: translateY(100px) rotate(720deg) scale(0.5); opacity: 0; }
+  0%   { background: var(--surface2); }
+  40%  { background: rgba(48,209,88,0.18); }
+  100% { background: var(--green-dim); }
 }
 
 @keyframes shimmer {
@@ -116,40 +108,38 @@ html, body {
   100% { background-position:  200% center; }
 }
 
-@keyframes blobFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%       { transform: translate(25px, -25px) scale(1.08); }
-  66%       { transform: translate(-15px, 15px) scale(0.95); }
-}
-
-@keyframes gradientShift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes neonGlow {
-  0%, 100% { filter: drop-shadow(0 0 6px currentColor); }
-  50%       { filter: drop-shadow(0 0 20px currentColor) drop-shadow(0 0 40px currentColor); }
-}
-
-@keyframes ringRotate {
-  to { transform: rotate(360deg); }
+@keyframes confettiDrop {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(90px) rotate(540deg); opacity: 0; }
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
-  50%       { box-shadow: 0 0 0 12px rgba(108,99,255,0); }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
 }
 
 @keyframes cardEntrance {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ringFill {
+  from { stroke-dashoffset: 502; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,184,0); }
+  50%       { box-shadow: 0 0 20px 4px rgba(0,212,184,0.25); }
+}
+
+@keyframes streakGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(245,166,35,0.6)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(245,166,35,0.9)); }
 }
 
 /* ── Focus ring ──────────────────────────────────────────── */
 :focus-visible {
-  outline:        3px solid var(--electric);
-  outline-offset: 2px;
+  outline:        2px solid var(--teal);
+  outline-offset: 3px;
   border-radius:  4px;
 }
