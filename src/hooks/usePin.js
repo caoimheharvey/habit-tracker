@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { verifyPin, storePin, pinIsSet, validatePin } from '../lib/pin'
+import { verifyPin, storePin, pinIsSet, validatePin, isEnvPinMode } from '../lib/pin'
 
 const SHAKE_DURATION_MS = 900
 
@@ -27,6 +27,7 @@ export function usePin() {
   const [error, setError] = useState('')
 
   // Mutable refs — no stale closure risk
+  // In env-var mode there is no setup flow — always start locked
   const modeRef    = useRef(pinIsSet() ? 'locked' : 'setup')
   const inputRef   = useRef('')
   const draftRef   = useRef('')
@@ -77,6 +78,20 @@ export function usePin() {
     if (mode === 'setup') {
       const { valid, error: err } = validatePin(next)
       if (!valid) { shake(err); return }
+
+      // In env-var mode, verify immediately — no confirm step needed
+      if (isEnvPinMode()) {
+        if (verifyPin(next)) {
+          modeRef.current  = 'unlocked'
+          inputRef.current = ''
+          setError('')
+          render()
+        } else {
+          shake('Wrong PIN. Try again.')
+        }
+        return
+      }
+
       draftRef.current  = next
       inputRef.current  = ''
       modeRef.current   = 'confirm'

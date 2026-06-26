@@ -10,6 +10,8 @@ import {
   allDailyDone,
   recordCompletion,
   sanitiseTitle,
+  addPhoto,
+  removePhoto,
 } from '../lib/state'
 import { DAILY_TASKS } from '../lib/constants'
 
@@ -90,8 +92,12 @@ export function useAppState({ today, onAllDailyDone }) {
     return addedCount
   }, [update, today])
 
-  const handleSetPhoto = useCallback((dataUrl) => {
-    update(prev => ({ ...prev, photo: dataUrl }))
+  const handleAddPhoto = useCallback((dataUrl) => {
+    update(prev => addPhoto(prev, dataUrl))
+  }, [update])
+
+  const handleRemovePhoto = useCallback((index) => {
+    update(prev => removePhoto(prev, index))
   }, [update])
 
   const handleSetSmartTasksDate = useCallback((date) => {
@@ -106,7 +112,8 @@ export function useAppState({ today, onAllDailyDone }) {
     handleDeleteOneOff,
     handleAddOneOff,
     handleMergeSmartTasks,
-    handleSetPhoto,
+    handleAddPhoto,
+    handleRemovePhoto,
     handleSetSmartTasksDate,
   }
 }

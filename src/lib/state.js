@@ -12,7 +12,7 @@ export function createDefaultState(today) {
     streak:         0,
     lastCompleted:  null,
     lastDate:       today,
-    photo:          null,
+    photos:         [],
     smartTasksDate: null,
   }
 }
@@ -52,6 +52,11 @@ export function loadState(today) {
     const raw = localStorage.getItem(STORE_KEY)
     const parsed = raw ? JSON.parse(raw) : null
     const base = parsed ?? createDefaultState(today)
+    // Migrate legacy single-photo field → photos array
+    if (!base.photos) {
+      base.photos = base.photo ? [base.photo] : []
+      delete base.photo
+    }
     return migrateStateToDay(base, today)
   } catch {
     // Corrupted localStorage — start fresh
@@ -202,6 +207,31 @@ export function recordCompletion(state, today) {
     streak:        wasYesterday ? state.streak + 1 : 1,
     lastCompleted: today,
   }
+}
+
+/**
+ * Adds a photo data URL to the photos array (max 10).
+ * Pure function.
+ *
+ * @param {import('../types').AppState} state
+ * @param {string} dataUrl
+ * @returns {import('../types').AppState}
+ */
+export function addPhoto(state, dataUrl) {
+  if (state.photos.length >= 10) return state
+  return { ...state, photos: [...state.photos, dataUrl] }
+}
+
+/**
+ * Removes a photo by index.
+ * Pure function.
+ *
+ * @param {import('../types').AppState} state
+ * @param {number} index
+ * @returns {import('../types').AppState}
+ */
+export function removePhoto(state, index) {
+  return { ...state, photos: state.photos.filter((_, i) => i !== index) }
 }
 
 /**

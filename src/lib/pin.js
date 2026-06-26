@@ -1,5 +1,15 @@
 import { PIN_KEY } from './constants'
 
+/** Returns the env-var PIN if configured, otherwise null. */
+function envPin() {
+  return process.env.NEXT_PUBLIC_APP_PIN ?? null
+}
+
+/** True when the app is running in env-var PIN mode. */
+export function isEnvPinMode() {
+  return !!envPin()
+}
+
 /**
  * Cheap deterministic hash — NOT cryptographic, just obfuscates
  * the PIN from a casual glance at DevTools / localStorage.
@@ -25,6 +35,9 @@ export function hashPin(pin) {
  * @returns {boolean}
  */
 export function verifyPin(pin) {
+  const ep = envPin()
+  if (ep) return pin === ep
+
   if (typeof window === 'undefined') return false
   const stored = localStorage.getItem(PIN_KEY)
   if (!stored) return false
@@ -32,9 +45,11 @@ export function verifyPin(pin) {
 }
 
 /**
+ * No-op in env-var PIN mode — nothing to store.
  * @param {string} pin
  */
 export function storePin(pin) {
+  if (isEnvPinMode()) return
   localStorage.setItem(PIN_KEY, hashPin(pin))
 }
 
@@ -42,6 +57,7 @@ export function storePin(pin) {
  * @returns {boolean}
  */
 export function pinIsSet() {
+  if (isEnvPinMode()) return true
   if (typeof window === 'undefined') return false
   return !!localStorage.getItem(PIN_KEY)
 }

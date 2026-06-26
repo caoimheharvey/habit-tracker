@@ -49,6 +49,9 @@ GOOGLE_CLIENT_SECRET=
 
 # Anthropic
 ANTHROPIC_API_KEY=
+
+# PIN (optional — set a 4-digit PIN here instead of the in-app setup flow)
+NEXT_PUBLIC_APP_PIN=
 ```
 
 ### Setting up Google OAuth
@@ -72,6 +75,7 @@ Set these in **Vercel → Project → Settings → Environment Variables**:
 | `GOOGLE_CLIENT_ID` | Google Cloud Console → OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | Google Cloud Console → OAuth 2.0 Client ID |
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/) → API Keys |
+| `NEXT_PUBLIC_APP_PIN` | Your 4-digit PIN — skips the in-app setup flow |
 
 ### Google OAuth — production redirect URI
 
