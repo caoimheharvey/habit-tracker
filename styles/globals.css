@@ -1,8 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400;1,600&family=Caveat:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400;1,600&family=Caveat:wght@500;700&family=Poppins:wght@700;800;900&display=swap');
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
+  /* Base */
   --cream:     #FDF6ED;
   --parchment: #F7EDD8;
   --warm:      #F0E2C8;
@@ -17,26 +18,29 @@
   --lav-l:     #EDE6F5;
   --sky:       #8AAFCC;
   --sky-l:     #D4E8F5;
-  --text:      #3D2B1A;
-  --muted:     #8C6E56;
+  --text:      #1A0A3D;
+  --muted:     #7A6E8C;
   --white:     #FFFDF5;
-  --shadow:    rgba(120,80,40,0.13);
+  --shadow:    rgba(26,10,61,0.12);
 
   /* Dopamine palette */
-  --punch:     #FF5F3D;
-  --punch-l:   #FFF0ED;
-  --electric:  #6C63FF;
-  --electric-l:#F0EFFF;
-  --neon:      #00C853;
-  --neon-l:    #E8FFF2;
-  --fire:      #FF9500;
-  --fire-l:    #FFF5E5;
-  --hot-pink:  #FF3CAC;
-  --deep:      #1A0A3D;
+  --punch:      #FF5F3D;
+  --punch-l:    #FFF0ED;
+  --electric:   #6C63FF;
+  --electric-l: #F0EFFF;
+  --neon:       #00C853;
+  --neon-l:     #E8FFF2;
+  --fire:       #FF9500;
+  --fire-l:     #FFF5E5;
+  --hot-pink:   #FF2D78;
+  --pink-l:     #FFF0F5;
+  --cyan:       #00C8FF;
+  --deep:       #1A0A3D;
+  --deep2:      #0A1A4E;
 }
 
 html, body {
-  background:             var(--cream);
+  background:             #F5F0FF;
   color:                  var(--text);
   font-family:            'Nunito', sans-serif;
   min-height:             100vh;
@@ -47,18 +51,13 @@ html, body {
 /* ── Animations ──────────────────────────────────────────── */
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50%       { transform: translateY(-8px) rotate(3deg); }
-}
-
-@keyframes floatR {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50%       { transform: translateY(-6px) rotate(-4deg); }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%       { transform: translateY(-10px) rotate(4deg); }
 }
 
 @keyframes bounceIn {
   0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
-  60%  { transform: scale(1.15) rotate(3deg); }
+  60%  { transform: scale(1.2) rotate(3deg); }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
@@ -69,12 +68,6 @@ html, body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25%       { transform: rotate(-8deg); }
-  75%       { transform: rotate(8deg); }
 }
 
 @keyframes fadePhoto {
@@ -95,31 +88,27 @@ html, body {
 
 @keyframes checkBounce {
   0%   { transform: scale(1); }
-  25%  { transform: scale(1.4); }
-  55%  { transform: scale(0.88); }
-  80%  { transform: scale(1.1); }
+  20%  { transform: scale(1.5) rotate(-10deg); }
+  50%  { transform: scale(0.85) rotate(5deg); }
+  75%  { transform: scale(1.15); }
   100% { transform: scale(1); }
 }
 
 @keyframes rowFlash {
-  0%   { background: var(--white); }
-  25%  { background: #E6FFF2; }
-  100% { background: var(--white); }
+  0%   { background: white; }
+  30%  { background: #E0FFF0; }
+  100% { background: var(--row-done-bg, #F4FFF8); }
 }
 
 @keyframes streakPop {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.12); }
-}
-
-@keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0); }
-  50%       { box-shadow: 0 0 24px 8px rgba(108,99,255,0.25); }
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  30%       { transform: scale(1.15) rotate(-8deg); }
+  60%       { transform: scale(1.1) rotate(6deg); }
 }
 
 @keyframes confettiDrop {
-  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(80px) rotate(720deg); opacity: 0; }
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(100px) rotate(720deg) scale(0.5); opacity: 0; }
 }
 
 @keyframes shimmer {
@@ -127,13 +116,40 @@ html, body {
   100% { background-position:  200% center; }
 }
 
-@keyframes ringAppear {
-  from { stroke-dashoffset: 502; opacity: 0; }
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(25px, -25px) scale(1.08); }
+  66%       { transform: translate(-15px, 15px) scale(0.95); }
 }
 
-/* ── Focus ring (accessibility) ──────────────────────────── */
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes neonGlow {
+  0%, 100% { filter: drop-shadow(0 0 6px currentColor); }
+  50%       { filter: drop-shadow(0 0 20px currentColor) drop-shadow(0 0 40px currentColor); }
+}
+
+@keyframes ringRotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(108,99,255,0); }
+}
+
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Focus ring ──────────────────────────────────────────── */
 :focus-visible {
-  outline:        3px solid var(--toffee);
+  outline:        3px solid var(--electric);
   outline-offset: 2px;
   border-radius:  4px;
 }
