@@ -421,7 +421,8 @@ export default function App() {
   const { mode: pinMode, error: pinError, loading: pinLoading, verify: verifyTotp, lock } = useTotp()
 
   const {
-    state, handleToggleDaily, handleToggleEvening, handleToggleOneOff, handleDeleteOneOff,
+    state, handleToggleDaily, handleToggleEvening, handleFailDaily, handleFailEvening,
+    handleToggleOneOff, handleDeleteOneOff,
     handleAddOneOff, handleMergeSmartTasks, handleAddPhoto, handleRemovePhoto,
     handleSetSmartTasksDate,
   } = useAppState({
@@ -504,8 +505,9 @@ export default function App() {
 
   const photos     = state.photos ?? []
   const bgPhoto    = photos.length ? photos[photoIdx] : (dailyBg?.urlRegular ?? null)
-  const dailyDone  = countDailyDone(state)
-  const dailyTotal = DAILY_TASKS.length
+  const dailyDone    = countDailyDone(state)
+  const dailyFailed  = Object.keys(state.dailyFailed ?? {}).length
+  const dailyTotal   = DAILY_TASKS.length - dailyFailed
   const { done: scoreDone, total: scoreTotal, score } = computeScore(state)
   const greeting   = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr    = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })
@@ -653,6 +655,7 @@ export default function App() {
               {/* Morning routine */}
               <GlassCard style={{ animation:'cardEntrance .4s ease .1s both' }}>
                 <SectionLabel right={`${dailyDone}/${dailyTotal}`}>Morning routine</SectionLabel>
+
                 {/* Thin progress bar */}
                 <div style={{ height:2, margin:'0 18px 4px', background:'rgba(255,255,255,0.06)', borderRadius:999 }}>
                   <div style={{ height:'100%', borderRadius:999, transition:'width .8s cubic-bezier(.4,0,.2,1)',
@@ -661,9 +664,11 @@ export default function App() {
                     boxShadow: `0 0 8px ${dailyDone===dailyTotal ? '#30D158' : '#00D4B8'}`,
                   }}/>
                 </div>
-                {DAILY_TASKS.filter(t => !state.dailyChecked[t.id]).map(t => (
+                {DAILY_TASKS.filter(t => !state.dailyChecked[t.id] && !state.dailyFailed?.[t.id]).map(t => (
                   <TaskRow key={t.id} emoji={t.emoji} title={t.title} desc={t.desc}
                     done={false} onToggle={() => handleToggleDaily(t.id)}
+                    onFail={() => handleFailDaily(t.id)}
+                    failStreak={state.failureStreaks?.[t.id] ?? 0}
                     by={t.by} color={t.color} now={now}/>
                 ))}
                 {dailyDone > 0 && (
@@ -679,20 +684,25 @@ export default function App() {
                 const eveningChecked = state.eveningChecked ?? {}
                 const eveningDone    = Object.keys(eveningChecked).length
                 const eveningTotal   = EVENING_TASKS.length
-                const remaining      = EVENING_TASKS.filter(t => !eveningChecked[t.id])
+                const eveningFailed  = state.eveningFailed ?? {}
+                const remaining      = EVENING_TASKS.filter(t => !eveningChecked[t.id] && !eveningFailed[t.id])
+                const failedCount    = Object.keys(eveningFailed).length
+                const effectiveTotal = eveningTotal - failedCount
                 return (
                   <GlassCard style={{ animation:'cardEntrance .4s ease .12s both' }}>
-                    <SectionLabel right={`${eveningDone}/${eveningTotal}`}>Evening routine</SectionLabel>
+                    <SectionLabel right={`${eveningDone}/${effectiveTotal}`}>Evening routine</SectionLabel>
                     <div style={{ height:2, margin:'0 18px 4px', background:'rgba(255,255,255,0.06)', borderRadius:999 }}>
                       <div style={{ height:'100%', borderRadius:999, transition:'width .8s cubic-bezier(.4,0,.2,1)',
-                        width:`${Math.round(eveningDone/eveningTotal*100)}%`,
-                        background: eveningDone===eveningTotal ? '#30D158' : '#C77DFF',
-                        boxShadow: `0 0 8px ${eveningDone===eveningTotal ? '#30D158' : '#C77DFF'}`,
+                        width:`${effectiveTotal > 0 ? Math.round(eveningDone/effectiveTotal*100) : 100}%`,
+                        background: eveningDone===effectiveTotal ? '#30D158' : '#C77DFF',
+                        boxShadow: `0 0 8px ${eveningDone===effectiveTotal ? '#30D158' : '#C77DFF'}`,
                       }}/>
                     </div>
                     {remaining.map(t => (
                       <TaskRow key={t.id} emoji={t.emoji} title={t.title} desc={t.desc}
                         done={false} onToggle={() => handleToggleEvening(t.id)}
+                        onFail={() => handleFailEvening(t.id)}
+                        failStreak={state.failureStreaks?.[t.id] ?? 0}
                         by={t.by} color={t.color} now={now}/>
                     ))}
                     {eveningDone > 0 && (

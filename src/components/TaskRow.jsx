@@ -39,7 +39,7 @@ function getDueInfo(dueDate, done) {
   return              { label: `${days}d`,         color: 'rgba(255,255,255,0.18)', pulse: false }
 }
 
-export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, smart, onDelete, by, color, now, dueDate }) {
+export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, smart, onDelete, onFail, failStreak, by, color, now, dueDate }) {
   const [justChecked, setJustChecked] = useState(false)
   const prevDone = useRef(done)
 
@@ -154,6 +154,13 @@ export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, 
             {desc}
           </div>
         )}
+        {/* Consecutive failure warning — shown only when 2+ days in a row */}
+        {failStreak >= 2 && !done && (
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#FF9F0A', marginTop: 3, display:'flex', alignItems:'center', gap:4 }}>
+            <span>⚠</span>
+            <span>Skipped {failStreak}× in a row — do it today.</span>
+          </div>
+        )}
       </div>
 
       {/* checkbox */}
@@ -170,11 +177,20 @@ export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, 
         {done && '✓'}
       </div>
 
+      {/* One-off delete */}
       {isOneOff && onDelete && !done && (
         <button onClick={e => { e.stopPropagation(); onDelete() }} aria-label={`Delete ${title}`}
           style={{ background:'none', border:'none', color:'rgba(255,255,255,0.18)',
             fontSize:20, cursor:'pointer', padding:'0 2px', flexShrink:0, lineHeight:1,
             WebkitTapHighlightColor:'transparent' }}>×</button>
+      )}
+      {/* Daily/evening fail button — very muted, only when not done */}
+      {onFail && !done && (
+        <button onClick={e => { e.stopPropagation(); onFail() }} aria-label={`Mark ${title} as failed`}
+          title="Mark as failed (won't count against score)"
+          style={{ background:'none', border:'none', color:'rgba(255,255,255,0.14)',
+            fontSize:16, cursor:'pointer', padding:'0 2px', flexShrink:0, lineHeight:1,
+            WebkitTapHighlightColor:'transparent', fontWeight:300 }}>✕</button>
       )}
     </div>
   )

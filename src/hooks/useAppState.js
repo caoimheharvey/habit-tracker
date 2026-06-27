@@ -5,6 +5,8 @@ import {
   migrateStateToDay,
   toggleDailyTask,
   toggleEveningTask,
+  failDailyTask,
+  failEveningTask,
   toggleOneOffTask,
   deleteOneOffTask,
   addOneOffTask,
@@ -122,7 +124,9 @@ export function useAppState({ today, onAllDailyDone }) {
     })
   }, [update, today, onAllDailyDone])
 
-  const handleToggleEvening = useCallback((taskId) => update(prev => toggleEveningTask(prev, taskId)), [update])
+  const handleToggleEvening  = useCallback((taskId) => update(prev => toggleEveningTask(prev, taskId)), [update])
+  const handleFailDaily      = useCallback((taskId) => update(prev => failDailyTask(prev, taskId)),    [update])
+  const handleFailEvening    = useCallback((taskId) => update(prev => failEveningTask(prev, taskId)),  [update])
   const handleToggleOneOff  = useCallback((index) => update(prev => toggleOneOffTask(prev, index)), [update])
   const handleDeleteOneOff  = useCallback((index) => update(prev => deleteOneOffTask(prev, index)), [update])
 
@@ -155,6 +159,8 @@ export function useAppState({ today, onAllDailyDone }) {
     dailyTaskCount: DAILY_TASKS.length,
     handleToggleDaily,
     handleToggleEvening,
+    handleFailDaily,
+    handleFailEvening,
     handleToggleOneOff,
     handleDeleteOneOff,
     handleAddOneOff,

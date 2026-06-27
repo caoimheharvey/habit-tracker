@@ -7,8 +7,11 @@ import { DAILY_TASKS, EVENING_TASKS, STORE_KEY } from './constants'
  */
 export function createDefaultState(today) {
   return {
-    dailyChecked:   {},
-    eveningChecked: {},
+    dailyChecked:    {},
+    eveningChecked:  {},
+    dailyFailed:     {},   // taskId → true for explicitly failed today
+    eveningFailed:   {},
+    failureStreaks:  {},   // taskId → consecutive fail count (persists across days)
     oneOffTasks:    [],
     streak:         0,
     lastCompleted:  null,
@@ -27,12 +30,15 @@ export function createDefaultState(today) {
  * @returns {{ done: number, total: number, score: number }}
  */
 export function computeScore(state) {
-  const dailyDone   = Object.keys(state.dailyChecked).length
-  const eveningDone = Object.keys(state.eveningChecked ?? {}).length
-  const dailyTotal  = DAILY_TASKS.length
-  const eveningTotal = EVENING_TASKS.length
-  const oneOffDone  = state.oneOffTasks.filter(t => t.done).length
-  const oneOffTotal = state.oneOffTasks.length
+  const dailyFailed  = Object.keys(state.dailyFailed  ?? {}).length
+  const eveningFailed = Object.keys(state.eveningFailed ?? {}).length
+  const dailyDone    = Object.keys(state.dailyChecked).length
+  const eveningDone  = Object.keys(state.eveningChecked ?? {}).length
+  // Exclude failed tasks from both numerator and denominator
+  const dailyTotal   = DAILY_TASKS.length   - dailyFailed
+  const eveningTotal = EVENING_TASKS.length - eveningFailed
+  const oneOffDone   = state.oneOffTasks.filter(t => t.done).length
+  const oneOffTotal  = state.oneOffTasks.length
   const done  = dailyDone + eveningDone + oneOffDone
   const total = dailyTotal + eveningTotal + oneOffTotal
   return { done, total, score: total > 0 ? Math.round((done / total) * 100) : 0 }
@@ -58,10 +64,28 @@ export function migrateStateToDay(state, today) {
   const record = { date: state.lastDate, score, done, total }
   const history = [record, ...(state.history ?? [])].slice(0, 90) // keep 90 days
 
+  // Update failure streaks based on yesterday's outcome
+  const prevFailed  = state.dailyFailed  ?? {}
+  const prevChecked = state.dailyChecked ?? {}
+  const prevEveningFailed  = state.eveningFailed  ?? {}
+  const prevEveningChecked = state.eveningChecked ?? {}
+  const streaks = { ...(state.failureStreaks ?? {}) }
+
+  for (const t of [...DAILY_TASKS, ...EVENING_TASKS]) {
+    const failed  = prevFailed[t.id] || prevEveningFailed[t.id]
+    const done    = prevChecked[t.id] || prevEveningChecked[t.id]
+    if (done)        streaks[t.id] = 0                      // completed → reset
+    else if (failed) streaks[t.id] = (streaks[t.id] ?? 0) + 1  // failed → increment
+    // not tracked (neither done nor failed) → leave streak unchanged
+  }
+
   return {
     ...state,
     dailyChecked:   {},
     eveningChecked: {},
+    dailyFailed:    {},
+    eveningFailed:  {},
+    failureStreaks:  streaks,
     oneOffTasks:    state.oneOffTasks.filter(t => !t.done),
     lastDate:       today,
     history,
@@ -133,6 +157,19 @@ export function toggleDailyTask(state, taskId) {
  * @param {number} index
  * @returns {import('../types').AppState}
  */
+export function failDailyTask(state, taskId) {
+  // Remove from checked if it was checked, mark as failed
+  const checked = { ...state.dailyChecked }
+  delete checked[taskId]
+  return { ...state, dailyChecked: checked, dailyFailed: { ...(state.dailyFailed ?? {}), [taskId]: true } }
+}
+
+export function failEveningTask(state, taskId) {
+  const checked = { ...state.eveningChecked }
+  delete checked[taskId]
+  return { ...state, eveningChecked: checked, eveningFailed: { ...(state.eveningFailed ?? {}), [taskId]: true } }
+}
+
 export function toggleEveningTask(state, taskId) {
   const checked = { ...state.eveningChecked }
   if (checked[taskId]) delete checked[taskId]
