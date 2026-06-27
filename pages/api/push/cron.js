@@ -37,65 +37,15 @@ export default async function handler(req, res) {
   const allEveningDone = eveningDone === EVENING_TASKS.length
   const streak        = state?.streak ?? 0
 
-  let notification = null
-
-  // 07:30 — morning routine starts
-  if (hourAMS === 7 && minAMS < 5) {
-    notification = {
-      title: '☀️ Morning routine',
-      body:  streak > 0
-        ? `🔥 ${streak}-day streak. Don't break it now. Start your routine.`
-        : 'Time to start. Open the app.',
-      tag: 'morning',
-    }
+  // Single daily notification at 7:30am Amsterdam time
+  const notification = {
+    title: '☀️ Morning routine',
+    body: streak > 0
+      ? `🔥 ${streak}-day streak on the line. Start your routine.`
+      : 'Time to start. Open the app.',
+    tag: 'morning',
   }
-
-  // 08:15 — urgent nudge if gym task not done
-  if (hourAMS === 8 && minAMS >= 10 && minAMS < 20 && !dailyChecked['gym'] && !allMorningDone) {
-    const remaining = DAILY_TASKS.filter(t => !dailyChecked[t.id])
-    const names = remaining.slice(0, 2).map(t => t.title).join(', ')
-    notification = {
-      title: '⏰ Gym deadline in 15 min',
-      body:  `Still pending: ${names}${remaining.length > 2 ? ` +${remaining.length - 2} more` : ''}.`,
-      tag: 'urgent',
-      renotify: true,
-    }
-  }
-
-  // 09:00 — streak at risk if morning not done
-  if (hourAMS === 9 && minAMS < 5 && !allMorningDone) {
-    notification = {
-      title: streak > 0 ? '🔥 Streak at risk' : '📋 Morning tasks unfinished',
-      body:  streak > 0
-        ? `${streak} days. Still ${totalCount - doneCount} tasks left. Finish it.`
-        : `${doneCount}/${totalCount} done. You're not finished yet.`,
-      tag: 'streak',
-      renotify: true,
-    }
-  }
-
-  // 20:30 — evening routine starts
-  if (hourAMS === 20 && minAMS >= 25 && minAMS < 35 && !allEveningDone) {
-    notification = {
-      title: '🌙 Evening routine',
-      body:  'Makeup off, teeth, tidy up. Takes 10 minutes.',
-      tag: 'evening',
-    }
-  }
-
-  // 21:15 — reminder if evening not done
-  if (hourAMS === 21 && minAMS >= 10 && minAMS < 20 && !allEveningDone) {
-    const remaining = EVENING_TASKS.filter(t => !eveningChecked[t.id])
-    notification = {
-      title: '🌙 Still pending',
-      body:  `${remaining.map(t => t.title).slice(0, 2).join(', ')}${remaining.length > 2 ? '…' : ''}. Do it now.`,
-      tag: 'evening-remind',
-      renotify: true,
-    }
-  }
-
-  if (!notification) return res.json({ skipped: true, hourAMS, minAMS })
 
   const result = await sendToAll({ ...notification, url: '/' })
-  return res.json({ sent: result, notification, hourAMS })
+  return res.json({ sent: result, notification })
 }
