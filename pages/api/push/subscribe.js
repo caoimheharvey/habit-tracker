@@ -1,5 +1,5 @@
-import { Redis } from '@upstash/redis'
-import { isTotpAuthenticated } from '../../../src/lib/serverAuth'
+import { Redis }           from '@upstash/redis'
+import { isAuthenticated } from '../../../src/lib/serverAuth'
 
 const PUSH_KEY = 'push_subscriptions'
 
@@ -8,7 +8,7 @@ function getRedis() {
 }
 
 export default async function handler(req, res) {
-  if (!isTotpAuthenticated(req)) return res.status(401).json({ error: 'Not authenticated' })
+  if (!await isAuthenticated(req, res)) return res.status(401).json({ error: 'Not authenticated' })
 
   if (req.method === 'POST') {
     const { subscription } = req.body
@@ -16,7 +16,6 @@ export default async function handler(req, res) {
 
     const redis = getRedis()
     const existing = await redis.get(PUSH_KEY) ?? []
-    // Deduplicate by endpoint
     const filtered = existing.filter(s => s.endpoint !== subscription.endpoint)
     await redis.set(PUSH_KEY, [...filtered, subscription])
     return res.json({ ok: true })

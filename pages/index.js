@@ -2,10 +2,8 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { useAppState }    from '../src/hooks/useAppState'
-import { useTotp }        from '../src/hooks/useTotp'
 import { useRoast }       from '../src/hooks/useRoast'
 import { useToast }       from '../src/hooks/useToast'
-import TotpScreen         from '../src/components/TotpScreen'
 import TaskRow            from '../src/components/TaskRow'
 import { Toast, Spinner } from '../src/components/ui'
 import { DAILY_TASKS, EVENING_TASKS } from '../src/lib/constants'
@@ -418,8 +416,6 @@ export default function App() {
     return () => { clearTimeout(first); clearInterval(interval) }
   }, [])
 
-  const { mode: pinMode, error: pinError, loading: pinLoading, verify: verifyTotp, lock } = useTotp()
-
   const {
     state, handleToggleDaily, handleToggleEvening, handleFailDaily, handleFailEvening,
     handleToggleOneOff, handleDeleteOneOff,
@@ -440,12 +436,12 @@ export default function App() {
   }, [state?.photos?.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (pinMode !== 'unlocked' || !state) return
+    if (!state) return
     if (!loadCached()) generateRoast({ streak: state.streak, events: [] })
   }, [pinMode, state?.streak]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!session || !state || pinMode !== 'unlocked') return
+    if (!session || !state) return
     if (state.smartTasksDate === TODAY) return
     runSmartTaskFetch()
   }, [session, state?.smartTasksDate, pinMode]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -501,7 +497,47 @@ export default function App() {
     setRollover([]); setEodText(''); setTab('home')
   }, [rollover, handleMergeSmartTasks, showToast])
 
-  if (!state) return null
+  if (status === 'loading' || !state) return null
+
+  // Not signed in → show Google sign-in screen
+  if (status === 'unauthenticated') {
+    return (
+      <>
+        <Background photo={null}/>
+        <div style={{ position:'relative', zIndex:1, minHeight:'100vh',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          padding:32, textAlign:'center' }}>
+          <div style={{
+            background:'rgba(0,0,0,0.4)', backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)',
+            border:'1px solid rgba(255,255,255,0.1)', borderRadius:28, padding:'48px 40px',
+            maxWidth:320, width:'100%',
+          }}>
+            <div style={{ fontSize:56, marginBottom:20 }}>☀️</div>
+            <div style={{ fontSize:10, fontWeight:700, color:'#00D4B8', letterSpacing:'3px',
+              textTransform:'uppercase', marginBottom:10 }}>Morning Accountability</div>
+            <h1 style={{ fontSize:26, fontWeight:800, letterSpacing:'-0.5px', marginBottom:8 }}>Welcome back</h1>
+            <p style={{ fontSize:13, color:'rgba(255,255,255,0.4)', marginBottom:32, lineHeight:1.6 }}>
+              Sign in with Google to access your routines and sync across devices.
+            </p>
+            <button onClick={() => signIn('google')} style={{
+              width:'100%', background:'#fff', color:'#111', border:'none',
+              borderRadius:14, padding:'14px 0', fontSize:15, fontWeight:700,
+              cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+              fontFamily:'Inter, sans-serif',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
+              </svg>
+              Sign in with Google
+            </button>
+          </div>
+        </div>
+      </>
+    )
+  }
 
   const photos     = state.photos ?? []
   const bgPhoto    = photos.length ? photos[photoIdx] : (dailyBg?.urlRegular ?? null)
@@ -512,9 +548,6 @@ export default function App() {
   const greeting   = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr    = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })
   const timeStr    = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })
-
-  if (pinMode === 'checking') return null
-  if (pinMode === 'locked')   return <TotpScreen error={pinError} loading={pinLoading} onVerify={verifyTotp}/>
 
   // ── All done ──
   if (showDone) {
@@ -581,13 +614,13 @@ export default function App() {
                     {dailyDone === dailyTotal ? 'All done ✓' : `${dailyTotal-dailyDone} remaining`}
                   </div>
                 </div>
-                <button onClick={lock} style={{
+                <button onClick={() => signOut()} style={{
                   ...darkGlass(0.3,12), borderRadius:999,
                   color:'rgba(255,255,255,0.35)', fontFamily:'Inter, sans-serif',
                   fontSize:10, fontWeight:600, padding:'5px 12px',
                   cursor:'pointer', border:'1px solid rgba(255,255,255,0.1)',
                   letterSpacing:'0.3px', WebkitTapHighlightColor:'transparent',
-                }}>Lock</button>
+                }}>Sign out</button>
               </div>
             </div>
 
@@ -613,24 +646,17 @@ export default function App() {
               {/* Deadline */}
               <DeadlineStrip dailyChecked={state.dailyChecked} now={now}/>
 
-              {/* Google connect */}
-              {(status === 'unauthenticated' || session?.error === 'RefreshAccessTokenError') && (
+              {/* Token expired — prompt re-auth */}
+              {session?.error === 'RefreshAccessTokenError' && (
                 <GlassCard style={{ padding:'14px 18px',
                   display:'flex', alignItems:'center', justifyContent:'space-between', gap:12,
-                  animation:'cardEntrance .35s ease both' }}>
-                  <div>
-                    <div style={{ fontSize:13, fontWeight:700, color:'#00D4B8' }}>
-                      {session?.error ? 'Reconnect Google' : 'Connect Google'}
-                    </div>
-                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', marginTop:2 }}>
-                      {session?.error ? 'Session expired' : 'Enable smart calendar tasks'}
-                    </div>
-                  </div>
+                  borderLeft:'2px solid #FF9F0A', animation:'cardEntrance .35s ease both' }}>
+                  <div style={{ fontSize:13, color:'rgba(255,255,255,0.7)' }}>Google session expired</div>
                   <button onClick={() => signIn('google')} style={{
                     background:'#00D4B8', color:'#000', border:'none',
                     borderRadius:10, padding:'8px 16px', fontSize:12, fontWeight:700,
                     cursor:'pointer', fontFamily:'Inter, sans-serif',
-                  }}>{session?.error ? 'Reconnect' : 'Connect'}</button>
+                  }}>Reconnect</button>
                 </GlassCard>
               )}
 
@@ -759,7 +785,6 @@ export default function App() {
                 <PhotoManager photos={photos} onRemove={handleRemovePhoto} fileRef={fileRef}/>
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                   {session && <ChipBtn onClick={()=>{ handleSetSmartTasksDate(null); runSmartTaskFetch() }}>✦ Smart tasks</ChipBtn>}
-                  {session && <ChipBtn onClick={()=>signOut()}>Google Sign Out</ChipBtn>}
                 </div>
               </div>
 

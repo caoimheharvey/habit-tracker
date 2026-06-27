@@ -1,23 +1,13 @@
-import { createHmac } from 'crypto'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '../../pages/api/auth/[...nextauth]'
 
 /**
- * Returns true if the request carries a valid, unexpired TOTP session cookie.
+ * Returns true if the request has a valid Google OAuth session.
  * @param {import('next').NextApiRequest} req
- * @returns {boolean}
+ * @param {import('next').NextApiResponse} res
+ * @returns {Promise<boolean>}
  */
-export function isTotpAuthenticated(req) {
-  const raw = req.cookies?.totp_session
-  if (!raw) return false
-  try {
-    const decoded  = decodeURIComponent(raw)
-    const dotIdx   = decoded.lastIndexOf('.')
-    const payload  = decoded.slice(0, dotIdx)
-    const sig      = decoded.slice(dotIdx + 1)
-    const expected = createHmac('sha256', process.env.NEXTAUTH_SECRET).update(payload).digest('hex')
-    if (sig !== expected)         return false
-    if (Date.now() > Number(payload)) return false
-    return true
-  } catch {
-    return false
-  }
+export async function isAuthenticated(req, res) {
+  const session = await getServerSession(req, res, authOptions)
+  return !!session
 }
