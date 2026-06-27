@@ -44,61 +44,55 @@ async function saveServerState(state) {
   }
 }
 
-/**
- * Central state hook for the app.
- * Uses localStorage as an instant-load cache and Vercel KV as the
- * cross-device source of truth. Changes are debounced 1.5s before
- * being written to the server.
- *
- * @param {{ today: string, onAllDailyDone: () => void }} options
- */
 export function useAppState({ today, onAllDailyDone }) {
   const [state, setState] = useState(null)
-  const saveTimer = useRef(null)
-  // Prevent the initial server-state load from triggering a redundant save
-  const isInitialServerLoad = useRef(false)
+  const saveTimer          = useRef(null)
+  const skipNextSave       = useRef(false)  // set true when we receive a server load so we don't echo it back
+  const serverSyncDone     = useRef(false)  // ensure we only register the focus listener once
 
-  // 1. Hydrate from localStorage immediately (instant)
+  // 1. Load from localStorage immediately on mount
   useEffect(() => {
     setState(loadState(today))
   }, [today])
 
-  // 2. Load from server and re-sync whenever the tab/app regains focus
-  const loadFromServer = useCallback(() => {
-    let cancelled = false
-    fetchServerState().then(serverState => {
-      if (cancelled || !serverState) return
-      isInitialServerLoad.current = true
-      setState(prev => {
-        const migrated = migrateStateToDay(serverState, today)
-        const merged = {
-          ...migrated,
-          photos: migrated.photos?.length ? migrated.photos : (prev?.photos ?? []),
-        }
-        persistState(merged)
-        return merged
-      })
+  // 2. Merge server state into local state (always prefer server as source of truth)
+  const applyServerState = useCallback((serverState) => {
+    if (!serverState) return
+    skipNextSave.current = true
+    setState(prev => {
+      const migrated = migrateStateToDay(serverState, today)
+      const merged = {
+        ...migrated,
+        photos: migrated.photos?.length ? migrated.photos : (prev?.photos ?? []),
+      }
+      persistState(merged)
+      return merged
     })
-    return () => { cancelled = true }
   }, [today])
 
-  useEffect(() => {
-    if (!state) return
-    const cleanup = loadFromServer()
-    // Re-sync from Redis whenever the user switches back to this tab/app
-    const onFocus = () => loadFromServer()
-    window.addEventListener('focus', onFocus)
-    return () => { cleanup?.(); window.removeEventListener('focus', onFocus) }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const syncFromServer = useCallback(() => {
+    fetchServerState().then(applyServerState)
+  }, [applyServerState])
 
-  // 3. Persist to localStorage and debounce-save to server on every change
+  // 3. Once local state is ready, do the initial server sync and register focus listener
+  useEffect(() => {
+    if (!state || serverSyncDone.current) return
+    serverSyncDone.current = true
+
+    syncFromServer()
+
+    const onFocus = () => syncFromServer()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [state, syncFromServer])
+
+  // 4. Save to localStorage + debounce-save to Redis on every state change
   useEffect(() => {
     if (!state) return
     persistState(state)
 
-    // Skip the server save triggered by the initial server load itself
-    if (isInitialServerLoad.current) {
-      isInitialServerLoad.current = false
+    if (skipNextSave.current) {
+      skipNextSave.current = false
       return
     }
 
@@ -130,8 +124,8 @@ export function useAppState({ today, onAllDailyDone }) {
   const handleToggleEvening  = useCallback((taskId) => update(prev => toggleEveningTask(prev, taskId)), [update])
   const handleFailDaily      = useCallback((taskId) => update(prev => failDailyTask(prev, taskId)),    [update])
   const handleFailEvening    = useCallback((taskId) => update(prev => failEveningTask(prev, taskId)),  [update])
-  const handleToggleOneOff  = useCallback((index) => update(prev => toggleOneOffTask(prev, index)), [update])
-  const handleDeleteOneOff  = useCallback((index) => update(prev => deleteOneOffTask(prev, index)), [update])
+  const handleToggleOneOff   = useCallback((index)  => update(prev => toggleOneOffTask(prev, index)),  [update])
+  const handleDeleteOneOff   = useCallback((index)  => update(prev => deleteOneOffTask(prev, index)),  [update])
 
   const handleAddOneOff = useCallback((rawTitle) => {
     const title = sanitiseTitle(rawTitle)
