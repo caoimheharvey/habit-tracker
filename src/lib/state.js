@@ -1,4 +1,4 @@
-import { DAILY_TASKS, STORE_KEY } from './constants'
+import { DAILY_TASKS, EVENING_TASKS, STORE_KEY } from './constants'
 
 /**
  * Returns a blank default AppState.
@@ -8,6 +8,7 @@ import { DAILY_TASKS, STORE_KEY } from './constants'
 export function createDefaultState(today) {
   return {
     dailyChecked:   {},
+    eveningChecked: {},
     oneOffTasks:    [],
     streak:         0,
     lastCompleted:  null,
@@ -26,12 +27,14 @@ export function createDefaultState(today) {
  * @returns {{ done: number, total: number, score: number }}
  */
 export function computeScore(state) {
-  const dailyDone  = Object.keys(state.dailyChecked).length
-  const dailyTotal = DAILY_TASKS.length
+  const dailyDone   = Object.keys(state.dailyChecked).length
+  const eveningDone = Object.keys(state.eveningChecked ?? {}).length
+  const dailyTotal  = DAILY_TASKS.length
+  const eveningTotal = EVENING_TASKS.length
   const oneOffDone  = state.oneOffTasks.filter(t => t.done).length
   const oneOffTotal = state.oneOffTasks.length
-  const done  = dailyDone + oneOffDone
-  const total = dailyTotal + oneOffTotal
+  const done  = dailyDone + eveningDone + oneOffDone
+  const total = dailyTotal + eveningTotal + oneOffTotal
   return { done, total, score: total > 0 ? Math.round((done / total) * 100) : 0 }
 }
 
@@ -58,6 +61,7 @@ export function migrateStateToDay(state, today) {
   return {
     ...state,
     dailyChecked:   {},
+    eveningChecked: {},
     oneOffTasks:    state.oneOffTasks.filter(t => !t.done),
     lastDate:       today,
     history,
@@ -129,6 +133,13 @@ export function toggleDailyTask(state, taskId) {
  * @param {number} index
  * @returns {import('../types').AppState}
  */
+export function toggleEveningTask(state, taskId) {
+  const checked = { ...state.eveningChecked }
+  if (checked[taskId]) delete checked[taskId]
+  else checked[taskId] = true
+  return { ...state, eveningChecked: checked }
+}
+
 export function toggleOneOffTask(state, index) {
   const tasks = state.oneOffTasks.map((t, i) =>
     i === index ? { ...t, done: !t.done } : t

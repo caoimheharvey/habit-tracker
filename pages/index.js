@@ -8,7 +8,7 @@ import { useToast }       from '../src/hooks/useToast'
 import TotpScreen         from '../src/components/TotpScreen'
 import TaskRow            from '../src/components/TaskRow'
 import { Toast, Spinner } from '../src/components/ui'
-import { DAILY_TASKS }    from '../src/lib/constants'
+import { DAILY_TASKS, EVENING_TASKS } from '../src/lib/constants'
 import { countDailyDone, computeScore } from '../src/lib/state'
 
 const TODAY       = new Date().toDateString()
@@ -421,7 +421,7 @@ export default function App() {
   const { mode: pinMode, error: pinError, loading: pinLoading, verify: verifyTotp, lock } = useTotp()
 
   const {
-    state, handleToggleDaily, handleToggleOneOff, handleDeleteOneOff,
+    state, handleToggleDaily, handleToggleEvening, handleToggleOneOff, handleDeleteOneOff,
     handleAddOneOff, handleMergeSmartTasks, handleAddPhoto, handleRemovePhoto,
     handleSetSmartTasksDate,
   } = useAppState({
@@ -673,6 +673,37 @@ export default function App() {
                   </div>
                 )}
               </GlassCard>
+
+              {/* Evening routine */}
+              {(() => {
+                const eveningChecked = state.eveningChecked ?? {}
+                const eveningDone    = Object.keys(eveningChecked).length
+                const eveningTotal   = EVENING_TASKS.length
+                const remaining      = EVENING_TASKS.filter(t => !eveningChecked[t.id])
+                return (
+                  <GlassCard style={{ animation:'cardEntrance .4s ease .12s both' }}>
+                    <SectionLabel right={`${eveningDone}/${eveningTotal}`}>Evening routine</SectionLabel>
+                    <div style={{ height:2, margin:'0 18px 4px', background:'rgba(255,255,255,0.06)', borderRadius:999 }}>
+                      <div style={{ height:'100%', borderRadius:999, transition:'width .8s cubic-bezier(.4,0,.2,1)',
+                        width:`${Math.round(eveningDone/eveningTotal*100)}%`,
+                        background: eveningDone===eveningTotal ? '#30D158' : '#C77DFF',
+                        boxShadow: `0 0 8px ${eveningDone===eveningTotal ? '#30D158' : '#C77DFF'}`,
+                      }}/>
+                    </div>
+                    {remaining.map(t => (
+                      <TaskRow key={t.id} emoji={t.emoji} title={t.title} desc={t.desc}
+                        done={false} onToggle={() => handleToggleEvening(t.id)}
+                        by={t.by} color={t.color} now={now}/>
+                    ))}
+                    {eveningDone > 0 && (
+                      <div style={{ padding:'11px 18px', fontSize:12, color:'rgba(255,255,255,0.25)',
+                        fontWeight:500, borderTop:'1px solid rgba(255,255,255,0.04)' }}>
+                        {eveningDone} done ✓
+                      </div>
+                    )}
+                  </GlassCard>
+                )
+              })()}
 
               {/* One-off tasks */}
               {state.oneOffTasks.some(t => !t.done) && (
