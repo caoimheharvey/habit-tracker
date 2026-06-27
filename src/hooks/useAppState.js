@@ -19,7 +19,7 @@ import {
 } from '../lib/state'
 import { DAILY_TASKS } from '../lib/constants'
 
-const SAVE_DEBOUNCE_MS = 1500
+const SAVE_DEBOUNCE_MS = 500
 
 async function fetchServerState() {
   try {
@@ -63,19 +63,14 @@ export function useAppState({ today, onAllDailyDone }) {
     setState(loadState(today))
   }, [today])
 
-  // 2. Once localStorage state is ready, overlay with server state
-  useEffect(() => {
-    if (!state) return
+  // 2. Load from server and re-sync whenever the tab/app regains focus
+  const loadFromServer = useCallback(() => {
     let cancelled = false
-
     fetchServerState().then(serverState => {
       if (cancelled || !serverState) return
       isInitialServerLoad.current = true
       setState(prev => {
-        // Migrate server state to today (handles cross-day device sync)
         const migrated = migrateStateToDay(serverState, today)
-        // Prefer server for everything; keep local photos if server has none
-        // (photos are large and may not always be synced successfully)
         const merged = {
           ...migrated,
           photos: migrated.photos?.length ? migrated.photos : (prev?.photos ?? []),
@@ -84,8 +79,16 @@ export function useAppState({ today, onAllDailyDone }) {
         return merged
       })
     })
-
     return () => { cancelled = true }
+  }, [today])
+
+  useEffect(() => {
+    if (!state) return
+    const cleanup = loadFromServer()
+    // Re-sync from Redis whenever the user switches back to this tab/app
+    const onFocus = () => loadFromServer()
+    window.addEventListener('focus', onFocus)
+    return () => { cleanup?.(); window.removeEventListener('focus', onFocus) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 3. Persist to localStorage and debounce-save to server on every change

@@ -1,5 +1,4 @@
-import { Redis }           from '@upstash/redis'
-import { isAuthenticated } from '../../src/lib/serverAuth'
+import { Redis } from '@upstash/redis'
 
 const STATE_KEY = 'app_state'
 
@@ -11,10 +10,6 @@ function getRedis() {
 }
 
 export default async function handler(req, res) {
-  if (!await isAuthenticated(req, res)) {
-    return res.status(401).json({ error: 'Not authenticated' })
-  }
-
   if (req.method === 'GET') {
     try {
       const state = await getRedis().get(STATE_KEY)
