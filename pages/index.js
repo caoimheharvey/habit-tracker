@@ -485,7 +485,7 @@ export default function App() {
     if (!eodText.trim()) { showToast('Write something first'); return }
     setRoLoad(true)
     try {
-      const res = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode:'rollover',summary:eodText}) })
+      const res = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode:'rollover',summary:eodText,existingOneOffs:state.oneOffTasks}) })
       if (!res.ok) throw new Error()
       const { tasks=[] } = await res.json()
       setRollover(tasks)

@@ -15,11 +15,11 @@ No softening, no "you've got this", no affirmations. End with one blunt command.
 Rules:
 - ONLY suggest tasks triggered by specific events or emails.
 - NEVER suggest daily habits: water, stretching, walking, gym, breakfast, getting ready.
-- No duplicates from the existing task list.
+- CRITICAL — semantic deduplication: check the "Already in list" tasks carefully. If any existing task covers the same subject, event, or goal — even with different wording — do NOT add another. E.g. if "Prep for Nebius interview" exists, don't add "Research Nebius", "Interview preparation", or anything else about the same interview.
 - Be specific: "Prepare 3 questions for Nebius interview" not "Prepare for interview".
 - If a trip is within 3 days, add a packing task.
 - If a trip may require a visa, add a visa-check task.
-- Interview within 5 days → 1–2 concrete prep tasks.
+- Interview within 5 days → 1–2 concrete prep tasks (only if nothing interview-related already exists).
 - Work deadline in email or calendar → suggest a task.
 - Max 5 tasks. If nothing warrants a task, return [].
 Return ONLY a JSON array: [{ "title": string (under 8 words), "note": string (one sentence why), "priority": "high"|"med"|"low", "triggerEvent": string }]`,
@@ -27,6 +27,7 @@ Return ONLY a JSON array: [{ "title": string (under 8 words), "note": string (on
   rollover: `Extract ONLY genuine one-off tasks from an end-of-day summary.
 Tasks must be: errands, appointments, work deadlines, or specific things the person said they still need to do.
 NEVER include daily habits: water, stretching, walking, gym, breakfast, getting ready — those reset automatically every day.
+CRITICAL — semantic deduplication: you will receive the existing task list. If any existing task already covers the same subject or goal — even with different wording — do NOT add it again. E.g. if "Call dentist" exists, don't add "Book dentist appointment".
 Return ONLY a JSON array: [{ "title": string (under 6 words), "note": string (one sentence), "priority": "high"|"med"|"low" }].
 If there are no genuine one-off tasks, return [].`,
 }
@@ -92,11 +93,12 @@ export default async function handler(req, res) {
     }
 
     if (mode === 'rollover') {
+      const existingStr = existingOneOffs.map(t => t.title).join(', ') || 'none'
       const message = await client.messages.create({
         model:      'claude-sonnet-4-6',
         max_tokens: 600,
         system:     SYSTEM_PROMPTS.rollover,
-        messages:   [{ role: 'user', content: summary }],
+        messages:   [{ role: 'user', content: `Already in list: ${existingStr}\n\nSummary:\n${summary}` }],
       })
 
       const raw = extractClaudeText(message)
