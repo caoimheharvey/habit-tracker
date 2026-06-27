@@ -681,7 +681,7 @@ export default function App() {
                   {state.oneOffTasks.filter(t => !t.done).map((t,i) => (
                     <TaskRow key={`oneoff-${i}`} emoji={t.smart?'✦':'◆'}
                       title={t.title} desc={t.note??(t.smart?`From: ${t.triggerEvent??'calendar'}`:undefined)}
-                      done={false} isOneOff smart={t.smart}
+                      done={false} isOneOff smart={t.smart} dueDate={t.dueDate}
                       onToggle={() => handleToggleOneOff(state.oneOffTasks.indexOf(t))}
                       onDelete={() => handleDeleteOneOff(state.oneOffTasks.indexOf(t))}/>
                   ))}

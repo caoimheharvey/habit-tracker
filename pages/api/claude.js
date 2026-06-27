@@ -22,13 +22,15 @@ Rules:
 - Interview within 5 days → 1–2 concrete prep tasks (only if nothing interview-related already exists).
 - Work deadline in email or calendar → suggest a task.
 - Max 5 tasks. If nothing warrants a task, return [].
-Return ONLY a JSON array: [{ "title": string (under 8 words), "note": string (one sentence why), "priority": "high"|"med"|"low", "triggerEvent": string }]`,
+Return ONLY a JSON array: [{ "title": string (under 8 words), "note": string (one sentence why), "priority": "high"|"med"|"low", "triggerEvent": string, "dueDate": "YYYY-MM-DD or null" }]
+Set dueDate to the date of the associated calendar event if one exists, otherwise null (the app will assign a 7-day default).`,
 
   rollover: `Extract ONLY genuine one-off tasks from an end-of-day summary.
 Tasks must be: errands, appointments, work deadlines, or specific things the person said they still need to do.
 NEVER include daily habits: water, stretching, walking, gym, breakfast, getting ready — those reset automatically every day.
 CRITICAL — semantic deduplication: you will receive the existing task list. If any existing task already covers the same subject or goal — even with different wording — do NOT add it again. E.g. if "Call dentist" exists, don't add "Book dentist appointment".
-Return ONLY a JSON array: [{ "title": string (under 6 words), "note": string (one sentence), "priority": "high"|"med"|"low" }].
+Return ONLY a JSON array: [{ "title": string (under 6 words), "note": string (one sentence), "priority": "high"|"med"|"low", "dueDate": "YYYY-MM-DD or null" }].
+Set dueDate if the person mentioned a specific deadline or date, otherwise null.
 If there are no genuine one-off tasks, return [].`,
 }
 

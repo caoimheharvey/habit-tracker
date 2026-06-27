@@ -163,7 +163,11 @@ export function addOneOffTask(state, task) {
   const titleLower = task.title.toLowerCase()
   const exists = state.oneOffTasks.some(t => t.title.toLowerCase() === titleLower)
   if (exists) return state
-  return { ...state, oneOffTasks: [...state.oneOffTasks, task] }
+  // Manual tasks get a 7-day deadline; smart tasks with a calendar-derived dueDate keep theirs
+  const dueDate = task.dueDate ?? (() => {
+    const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10)
+  })()
+  return { ...state, oneOffTasks: [...state.oneOffTasks, { ...task, dueDate }] }
 }
 
 /**

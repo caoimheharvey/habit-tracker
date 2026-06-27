@@ -5,9 +5,9 @@ function getDeadlineState(by, done, now) {
   const [h, m] = by.split(':').map(Number)
   const d = new Date(now); d.setHours(h, m, 0, 0)
   const diffMs = d - now
-  if (diffMs < 0)                   return 'overdue'
-  if (diffMs < 10 * 60 * 1000)     return 'urgent'
-  if (diffMs < 25 * 60 * 1000)     return 'soon'
+  if (diffMs < 0)               return 'overdue'
+  if (diffMs < 10 * 60 * 1000) return 'urgent'
+  if (diffMs < 25 * 60 * 1000) return 'soon'
   return 'ok'
 }
 
@@ -27,7 +27,19 @@ function formatCountdown(by, now) {
   return diffMin < 60 ? `${diffMin}m` : `${Math.floor(diffMin/60)}h${diffMin%60?` ${diffMin%60}m`:''}`
 }
 
-export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, smart, onDelete, by, color, now }) {
+function getDueInfo(dueDate, done) {
+  if (!dueDate || done) return null
+  const due    = new Date(dueDate); due.setHours(23, 59, 59, 0)
+  const diffMs = due - Date.now()
+  const days   = Math.ceil(diffMs / 86400000)
+  if (diffMs < 0) return { label: 'overdue',      color: '#FF453A', pulse: true  }
+  if (days <= 1)  return { label: 'due tomorrow', color: '#FF453A', pulse: false }
+  if (days <= 3)  return { label: `${days}d left`, color: '#FF9F0A', pulse: false }
+  if (days <= 5)  return { label: `${days}d left`, color: 'rgba(255,255,255,0.35)', pulse: false }
+  return              { label: `${days}d`,         color: 'rgba(255,255,255,0.18)', pulse: false }
+}
+
+export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, smart, onDelete, by, color, now, dueDate }) {
   const [justChecked, setJustChecked] = useState(false)
   const prevDone = useRef(done)
 
@@ -43,20 +55,23 @@ export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, 
   const deadlineState = now ? getDeadlineState(by, done, now) : null
   const isOverdue  = deadlineState === 'overdue'
   const isUrgent   = deadlineState === 'urgent'
+  const dueInfo    = isOneOff ? getDueInfo(dueDate, done) : null
+  const isDueOverdue = dueInfo?.label === 'overdue'
 
   const rowBg = done
     ? 'rgba(48,209,88,0.06)'
-    : isOverdue
+    : isOverdue || isDueOverdue
       ? 'rgba(255,69,58,0.06)'
       : 'transparent'
 
   const borderColor = done
     ? '#30D158'
+    : isOverdue || isDueOverdue ? '#FF453A'
     : color ?? 'rgba(255,255,255,0.12)'
 
   const checkBg = done
     ? '#30D158'
-    : isOverdue
+    : isOverdue || isDueOverdue
       ? 'rgba(255,69,58,0.15)'
       : 'rgba(255,255,255,0.05)'
 
@@ -78,8 +93,9 @@ export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, 
         borderLeft: `2px solid ${borderColor}`,
         cursor: 'pointer',
         position: 'relative', overflow: 'hidden',
-        transition: 'background .3s',
-        animation: justChecked ? 'rowFlash .6s ease forwards' : 'none',
+        transition: 'background .3s, border-color .3s',
+        animation: justChecked ? 'rowFlash .6s ease forwards'
+          : isDueOverdue ? 'pulse 2s ease-in-out infinite' : 'none',
         WebkitTapHighlightColor: 'transparent',
       }}
     >
@@ -106,19 +122,30 @@ export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, 
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
           <span style={{
             fontSize: 14, fontWeight: 600,
-            color: done ? 'rgba(255,255,255,0.3)' : isOverdue ? 'rgba(255,69,58,0.85)' : 'rgba(255,255,255,0.88)',
+            color: done ? 'rgba(255,255,255,0.3)'
+              : isOverdue || isDueOverdue ? 'rgba(255,69,58,0.85)'
+              : 'rgba(255,255,255,0.88)',
             textDecoration: done ? 'line-through' : 'none',
             transition: 'all .25s',
           }}>
             {title}
           </span>
+          {/* Daily task countdown */}
           {by && !done && (
             <span style={{
-              fontSize: 10, fontWeight: 700,
-              color: deadlineColor,
+              fontSize: 10, fontWeight: 700, color: deadlineColor,
               animation: isUrgent || isOverdue ? 'pulse 1s ease-in-out infinite' : 'none',
             }}>
-              {isOverdue ? `⚡ ${formatBy(by)}` : `${formatCountdown(by, now)}`}
+              {isOverdue ? `⚡ ${formatBy(by)}` : formatCountdown(by, now)}
+            </span>
+          )}
+          {/* One-off due date badge */}
+          {dueInfo && !done && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: dueInfo.color,
+              animation: dueInfo.pulse ? 'pulse 1s ease-in-out infinite' : 'none',
+            }}>
+              {dueInfo.label === 'overdue' ? '⚡ overdue' : dueInfo.label}
             </span>
           )}
         </div>
@@ -132,7 +159,7 @@ export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, 
       {/* checkbox */}
       <div aria-hidden="true" style={{
         width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-        border: done ? 'none' : `1.5px solid ${isOverdue ? 'rgba(255,69,58,0.4)' : 'rgba(255,255,255,0.15)'}`,
+        border: done ? 'none' : `1.5px solid ${isOverdue || isDueOverdue ? 'rgba(255,69,58,0.4)' : 'rgba(255,255,255,0.15)'}`,
         background: checkBg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 14, color: '#000', fontWeight: 900,
