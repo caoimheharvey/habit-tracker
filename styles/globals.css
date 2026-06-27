@@ -3,55 +3,42 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg:        #0B0B0F;
-  --surface:   #16161E;
-  --surface2:  #1E1E28;
-  --border:    rgba(255,255,255,0.07);
-  --border2:   rgba(255,255,255,0.12);
+  --glass:       rgba(255,255,255,0.08);
+  --glass-dark:  rgba(0,0,0,0.28);
+  --glass-border:rgba(255,255,255,0.13);
+  --glass-border-dark: rgba(255,255,255,0.07);
 
-  --text:      #FFFFFF;
-  --text2:     rgba(255,255,255,0.55);
-  --text3:     rgba(255,255,255,0.28);
+  --text:    #FFFFFF;
+  --text2:   rgba(255,255,255,0.55);
+  --text3:   rgba(255,255,255,0.28);
 
   --teal:      #00D4B8;
-  --teal-dim:  rgba(0,212,184,0.15);
+  --teal-glow: rgba(0,212,184,0.35);
   --gold:      #F5A623;
-  --gold-dim:  rgba(245,166,35,0.15);
+  --gold-glow: rgba(245,166,35,0.4);
   --green:     #30D158;
-  --green-dim: rgba(48,209,88,0.12);
+  --green-glow:rgba(48,209,88,0.35);
   --red:       #FF453A;
-  --red-dim:   rgba(255,69,58,0.15);
   --orange:    #FF9F0A;
-  --orange-dim:rgba(255,159,10,0.15);
 
-  /* legacy aliases so shared components don't break */
-  --cream: #0B0B0F;
-  --white: #16161E;
-  --warm:  #1E1E28;
-  --sand:  rgba(255,255,255,0.1);
-  --toffee: #F5A623;
-  --caramel: #E09010;
-  --moss:  #30D158;
-  --moss-l: rgba(48,209,88,0.15);
-  --blush: #FF453A;
-  --blush-l: rgba(255,69,58,0.12);
-  --lavender: #9B8FB0;
-  --lav-l: rgba(155,143,176,0.12);
-  --sky: #00D4B8;
-  --sky-l: rgba(0,212,184,0.12);
-  --muted: rgba(255,255,255,0.45);
-  --shadow: rgba(0,0,0,0.5);
-  --electric: #00D4B8;
-  --electric-l: rgba(0,212,184,0.12);
-  --neon: #30D158;
-  --punch: #FF453A;
-  --punch-l: rgba(255,69,58,0.12);
+  /* legacy aliases */
+  --cream: #0B0B0F; --white: rgba(255,255,255,0.08);
+  --warm:  rgba(255,255,255,0.05); --sand: rgba(255,255,255,0.15);
+  --toffee: #F5A623; --caramel: #E09010;
+  --moss: #30D158; --moss-l: rgba(48,209,88,0.15);
+  --blush: #FF453A; --blush-l: rgba(255,69,58,0.12);
+  --lav-l: rgba(255,255,255,0.06); --sky-l: rgba(0,212,184,0.12);
+  --muted: rgba(255,255,255,0.45); --shadow: rgba(0,0,0,0.4);
+  --electric: #00D4B8; --electric-l: rgba(0,212,184,0.12);
+  --neon: #30D158; --punch: #FF453A; --punch-l: rgba(255,69,58,0.12);
+  --surface: rgba(255,255,255,0.07); --surface2: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.15);
   --text-css: #FFFFFF;
 }
 
 html, body {
-  background:             var(--bg);
-  color:                  var(--text);
+  background:             #0B0B14;
+  color:                  #FFFFFF;
   font-family:            'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   min-height:             100vh;
   overflow-x:             hidden;
@@ -67,7 +54,7 @@ html, body {
 
 @keyframes bounceIn {
   0%   { transform: scale(0.6); opacity: 0; }
-  60%  { transform: scale(1.1); }
+  60%  { transform: scale(1.15); }
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -92,15 +79,15 @@ html, body {
 
 @keyframes checkBounce {
   0%   { transform: scale(1); }
-  30%  { transform: scale(1.35); }
-  60%  { transform: scale(0.9); }
+  30%  { transform: scale(1.4); }
+  65%  { transform: scale(0.88); }
   100% { transform: scale(1); }
 }
 
 @keyframes rowFlash {
-  0%   { background: var(--surface2); }
-  40%  { background: rgba(48,209,88,0.18); }
-  100% { background: var(--green-dim); }
+  0%   { background: rgba(255,255,255,0.04); }
+  35%  { background: rgba(48,209,88,0.2); }
+  100% { background: rgba(48,209,88,0.06); }
 }
 
 @keyframes shimmer {
@@ -115,29 +102,31 @@ html, body {
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.6; }
+  50%       { opacity: 0.55; }
 }
 
 @keyframes cardEntrance {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes ringFill {
-  from { stroke-dashoffset: 502; }
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-@keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,184,0); }
-  50%       { box-shadow: 0 0 20px 4px rgba(0,212,184,0.25); }
+@keyframes blobDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.06); }
+  66%       { transform: translate(-20px, 15px) scale(0.96); }
 }
 
 @keyframes streakGlow {
-  0%, 100% { filter: drop-shadow(0 0 8px rgba(245,166,35,0.6)); }
-  50%       { filter: drop-shadow(0 0 20px rgba(245,166,35,0.9)); }
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(245,166,35,0.65)); }
+  50%       { filter: drop-shadow(0 0 24px rgba(245,166,35,1)); }
 }
 
-/* ── Focus ring ──────────────────────────────────────────── */
 :focus-visible {
   outline:        2px solid var(--teal);
   outline-offset: 3px;
