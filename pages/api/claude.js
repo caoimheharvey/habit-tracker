@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   const { valid, error: validationError } = validateClaudeRequest(req.body)
   if (!valid) return res.status(400).json({ error: validationError })
 
-  const { mode, events = [], emails = [], streak = 0, existingOneOffs = [], summary } = req.body
+  const { mode, events = [], emails = [], streak = 0, existingOneOffs = [], summary, seed } = req.body
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   try {
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
         system:     SYSTEM_PROMPTS.roast,
         messages:   [{
           role:    'user',
-          content: `Today: ${today}. Streak: ${streak} days.\nCalendar:\n${eventSummary}\n\nGive me my morning check-in.`,
+          content: `Today: ${today}. Streak: ${streak} days.\nCalendar:\n${eventSummary}\n\nGive me my morning check-in. [ref:${(seed ?? Math.random()).toString(36).slice(2, 7)}]`,
         }],
       })
 
