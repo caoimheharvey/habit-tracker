@@ -185,11 +185,10 @@ export default function TaskRow({ emoji, title, desc, done, onToggle, isOneOff, 
             WebkitTapHighlightColor:'transparent' }}>×</button>
       )}
       {/* Daily/evening fail button — only visible 1h after the task deadline */}
-      {onFail && !done && (() => {
-        if (!by || !now) return false
+      {onFail && !done && by && now && (() => {
         const [h, m] = by.split(':').map(Number)
         const deadline = new Date(now); deadline.setHours(h, m, 0, 0)
-        return now - deadline > 60 * 60 * 1000
+        return (now.getTime() - deadline.getTime()) > 60 * 60 * 1000
       })() && (
         <button onClick={e => { e.stopPropagation(); onFail() }} aria-label={`Mark ${title} as failed`}
           title="Mark as failed (won't count against score)"
