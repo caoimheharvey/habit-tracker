@@ -438,13 +438,13 @@ export default function App() {
   useEffect(() => {
     if (!state) return
     if (!loadCached()) generateRoast({ streak: state.streak, events: [] })
-  }, [pinMode, state?.streak]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state?.streak]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!session || !state) return
     if (state.smartTasksDate === TODAY) return
     runSmartTaskFetch()
-  }, [session, state?.smartTasksDate, pinMode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session, state?.smartTasksDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const runSmartTaskFetch = useCallback(async () => {
     showToast('Checking your calendar…')
