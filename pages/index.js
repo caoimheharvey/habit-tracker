@@ -39,9 +39,9 @@ function getDeadlineInfo(by, done, now) {
   return { isLate, isUrgent, isSoon, label, countdown, diffMs }
 }
 
-function nextPendingDeadline(dailyChecked, now) {
+function nextPendingDeadline(dailyChecked, dailyFailed, now) {
   return DAILY_TASKS
-    .filter(t => !dailyChecked[t.id] && t.by)
+    .filter(t => !dailyChecked[t.id] && !dailyFailed?.[t.id] && t.by)
     .map(t => ({ ...t, info: getDeadlineInfo(t.by, false, now) }))
     .filter(t => t.info)
     .sort((a, b) => a.info.diffMs - b.info.diffMs)[0] ?? null
@@ -272,8 +272,8 @@ function StreakStat({ streak }) {
 }
 
 // ── Deadline strip ────────────────────────────────────────────────────────────
-function DeadlineStrip({ dailyChecked, now }) {
-  const next = nextPendingDeadline(dailyChecked, now)
+function DeadlineStrip({ dailyChecked, dailyFailed, now }) {
+  const next = nextPendingDeadline(dailyChecked, dailyFailed, now)
   if (!next) return null
   const { isLate, isUrgent, isSoon, label, countdown } = next.info
   const accent = isLate || isUrgent ? '#FF453A' : isSoon ? '#FF9F0A' : '#00D4B8'
@@ -644,7 +644,7 @@ export default function App() {
             <div style={{ padding:'12px 22px 0', display:'flex', flexDirection:'column', gap:12 }}>
 
               {/* Deadline */}
-              <DeadlineStrip dailyChecked={state.dailyChecked} now={now}/>
+              <DeadlineStrip dailyChecked={state.dailyChecked} dailyFailed={state.dailyFailed} now={now}/>
 
               {/* Token expired — prompt re-auth */}
               {session?.error === 'RefreshAccessTokenError' && (
